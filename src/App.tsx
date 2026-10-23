@@ -36,6 +36,9 @@ import { SmartChainPitch } from './components/SmartChainPitch';
 import { ProfileModal } from './components/ProfileModal';
 import { DeadlineRemindersModal } from './components/DeadlineRemindersModal';
 import { OpportunityAgent } from './components/OpportunityAgent';
+import { Footer } from './components/Footer';
+import { AuthModal } from './components/AuthModal';
+import { ContactModal } from './components/ContactModal';
 import { ArrowRight, Compass, ShieldCheck, HeartHandshake } from 'lucide-react';
 
 export default function App() {
@@ -68,6 +71,9 @@ function OpportunityRadarApp() {
   const [isRemindersModalOpen, setIsRemindersModalOpen] = useState<boolean>(false);
   const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState<boolean>(false);
   const [onboardingCategory, setOnboardingCategory] = useState<OpportunityCategory | undefined>(undefined);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'signup'>('login');
+  const [isContactModalOpen, setIsContactModalOpen] = useState<boolean>(false);
 
   // Save profile & tracker changes to storage
   useEffect(() => {
@@ -276,17 +282,31 @@ function OpportunityRadarApp() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 flex flex-col font-sans transition-colors">
+    <div className="min-h-screen bg-[#FAFAFA] text-neutral-900 dark:bg-[#09090b] dark:text-neutral-100 flex flex-col font-sans transition-colors relative selection:bg-indigo-500 selection:text-white">
       
-      {/* 3-zone Header */}
+      {/* Signature Atmospheric Black Texture Glow & Dot Matrix across ALL pages */}
+      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-indigo-500/5 dark:bg-indigo-600/12 rounded-full blur-[130px]" />
+        <div className="absolute top-1/2 right-0 w-[550px] h-[350px] bg-purple-500/5 dark:bg-purple-600/8 rounded-full blur-[140px]" />
+        <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:24px_24px] opacity-40 dark:opacity-60" />
+      </div>
+
+      {/* Cursor AI Inspired Header */}
       <Header
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
         userProfile={userProfile}
         setUserProfile={setUserProfile}
+        onOpenLogin={() => {
+          setAuthModalMode('login');
+          setIsAuthModalOpen(true);
+        }}
+        onOpenSignUp={() => {
+          setAuthModalMode('signup');
+          setIsAuthModalOpen(true);
+        }}
         onOpenProfile={() => setIsProfileModalOpen(true)}
         onOpenReminders={() => setIsRemindersModalOpen(true)}
-        onOpenOnboarding={() => handleOpenOnboardingWithCategory()}
         urgentDeadlinesCount={urgentDeadlinesCount}
       />
 
@@ -309,7 +329,7 @@ function OpportunityRadarApp() {
           />
         )}
 
-        {/* Discovery Feed */}
+        {/* Discovery Feed (Explore) */}
         {currentTab === 'feed' && (
           <div>
             <HeroBanner
@@ -318,6 +338,7 @@ function OpportunityRadarApp() {
               userProfile={userProfile}
               setUserProfile={setUserProfile}
               onExploreTracker={() => setCurrentTab('tracker')}
+              onLaunchAgent={() => setCurrentTab('agent')}
             />
 
             <FiltersBar
@@ -339,25 +360,25 @@ function OpportunityRadarApp() {
             />
 
             {/* Opportunities Feed Grid */}
-            <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
               {filteredOpportunities.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 p-12 text-center bg-white dark:bg-slate-900">
-                  <Compass className="mx-auto h-10 w-10 text-slate-400 mb-3" />
-                  <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                <div className="rounded-2xl border border-dashed border-neutral-300 dark:border-white/[0.08] p-12 text-center bg-white dark:bg-[#0c0c0e]">
+                  <Compass className="mx-auto h-10 w-10 text-neutral-400 mb-3" />
+                  <h3 className="text-base font-semibold text-neutral-900 dark:text-white">
                     No matching opportunities found
                   </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto mt-1 mb-4">
-                    Try broadening your filters, resetting category selections, or using the AI Ingestion Studio to import a new opportunity.
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 max-w-md mx-auto mt-1 mb-4">
+                    Try broadening your filters, resetting category selections, or asking the Agentic Copilot to search deeper.
                   </p>
                   <button
                     onClick={resetFilters}
-                    className="px-4 py-2 text-xs font-semibold rounded-lg bg-sky-600 text-white hover:bg-sky-500 transition-colors"
+                    className="px-4 py-2 text-xs font-semibold rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors shadow-xs"
                   >
                     Reset All Filters
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                   {filteredOpportunities.map((opp) => {
                     const isSaved = trackerItems.some((t) => t.opportunityId === opp.id);
                     return (
@@ -423,57 +444,32 @@ function OpportunityRadarApp() {
         )}
       </main>
 
-      {/* Footer (Rendered when not on Landing page, or as site fallback) */}
-      {currentTab !== 'landing' && (
-        <footer className="border-t border-slate-200 bg-white py-8 dark:border-slate-800 dark:bg-slate-900 text-xs text-slate-500 dark:text-slate-400">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-slate-900 dark:text-white">OpportunityRadar</span>
-              <span>· Autonomous Opportunity Engine</span>
-            </div>
-            <div className="flex items-center gap-6">
-              <button
-                onClick={() => setCurrentTab('landing')}
-                className="hover:text-slate-900 dark:hover:text-white transition-colors"
-              >
-                Overview
-              </button>
-              <button
-                onClick={() => setCurrentTab('feed')}
-                className="hover:text-slate-900 dark:hover:text-white transition-colors"
-              >
-                Explore
-              </button>
-              <button
-                onClick={() => setCurrentTab('tracker')}
-                className="hover:text-slate-900 dark:hover:text-white transition-colors"
-              >
-                Tracker
-              </button>
-              <button
-                onClick={() => setCurrentTab('agent')}
-                className="hover:text-slate-900 dark:hover:text-white font-semibold text-indigo-600 dark:text-indigo-400 transition-colors"
-              >
-                Agent Copilot
-              </button>
-              <button
-                onClick={() => setCurrentTab('community')}
-                className="hover:text-slate-900 dark:hover:text-white transition-colors"
-              >
-                Community
-              </button>
-              <button
-                onClick={() => setCurrentTab('pitch')}
-                className="hover:text-slate-900 dark:hover:text-white transition-colors"
-              >
-                Roadmap
-              </button>
-            </div>
-          </div>
-        </footer>
-      )}
+      {/* Enhanced Global Footer with Interactive Contact & Ingestion */}
+      <Footer
+        onNavigateToTab={(tab) => setCurrentTab(tab)}
+        onOpenContact={() => setIsContactModalOpen(true)}
+      />
 
-      {/* Detail Modal */}
+      {/* Auth Modal (Login & Sign Up) */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        initialMode={authModalMode}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={(profile) => {
+          handleSaveProfile(profile);
+        }}
+        onLaunchFullOnboarding={() => {
+          handleOpenOnboardingWithCategory();
+        }}
+      />
+
+      {/* Contact & Support Modal */}
+      <ContactModal
+        isOpen={isContactModalOpen}
+        onClose={() => setIsContactModalOpen(false)}
+      />
+
+      {/* Opportunity Detail Modal */}
       {selectedOpportunity && (
         <OpportunityDetailModal
           opportunity={selectedOpportunity}

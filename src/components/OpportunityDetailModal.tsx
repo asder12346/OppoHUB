@@ -65,14 +65,14 @@ export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
   const deadlineInfo = calculateDeadlineInfo(opportunity.deadline);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md overflow-y-auto">
       <div
-        className="relative w-full max-w-3xl rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 max-h-[90vh] flex flex-col overflow-hidden my-8"
+        className="relative w-full max-w-3xl rounded-2xl border border-neutral-200 bg-white shadow-2xl dark:border-white/[0.08] dark:bg-[#0c0c0e] max-h-[90vh] flex flex-col overflow-hidden my-8"
         role="dialog"
         aria-modal="true"
       >
         {/* Modal Header */}
-        <div className="flex items-start justify-between border-b border-slate-100 p-6 dark:border-slate-800 shrink-0">
+        <div className="flex items-start justify-between border-b border-neutral-100 p-6 dark:border-white/[0.06] shrink-0">
           <div>
             <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-2">
               <span className="font-semibold text-sky-600 dark:text-sky-400 uppercase tracking-wide">
@@ -107,7 +107,7 @@ export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
         <div className="overflow-y-auto p-6 space-y-6 flex-1 text-sm">
           
           {/* Key Facts Strip */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl bg-neutral-50 dark:bg-white/[0.04] border border-neutral-200/60 dark:border-white/[0.06]">
             <div>
               <span className="text-xs text-slate-500 dark:text-slate-400 block mb-0.5">Funding / Amount</span>
               <span className="font-semibold text-slate-900 dark:text-white block">

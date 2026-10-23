@@ -1,7 +1,6 @@
 import React from 'react';
-import { Search, Sparkles, ShieldCheck, Calendar, ArrowRight } from 'lucide-react';
-import { UserProfile, PersonaType } from '../types';
-import { DEMO_PROFILES } from '../data/seedOpportunities';
+import { Search, Sparkles, ShieldCheck, ArrowRight, Compass, Bot } from 'lucide-react';
+import { UserProfile } from '../types';
 
 interface HeroBannerProps {
   searchQuery: string;
@@ -9,125 +8,117 @@ interface HeroBannerProps {
   userProfile: UserProfile;
   setUserProfile: (profile: UserProfile) => void;
   onExploreTracker: () => void;
+  onLaunchAgent: () => void;
 }
 
 export const HeroBanner: React.FC<HeroBannerProps> = ({
   searchQuery,
   setSearchQuery,
   userProfile,
-  setUserProfile,
-  onExploreTracker
+  onExploreTracker,
+  onLaunchAgent
 }) => {
   return (
-    <section className="relative overflow-hidden border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
-        <div className="grid grid-cols-1 items-stretch gap-10 lg:grid-cols-12">
+    <section className="relative overflow-hidden border-b border-black/[0.08] dark:border-white/[0.08] bg-[#FAFAFA] dark:bg-[#09090b] text-neutral-900 dark:text-neutral-100 transition-colors">
+      
+      {/* Subtle Radial Glow for atmospheric black texture */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-indigo-500/10 dark:bg-indigo-600/15 rounded-full blur-3xl pointer-events-none -z-10" />
+
+      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+        <div className="grid grid-cols-1 items-stretch gap-8 lg:grid-cols-12">
           
           {/* Left Column: Vision & Search */}
           <div className="flex flex-col justify-center lg:col-span-7">
-            <div className="inline-flex items-center gap-2 text-xs font-medium text-sky-600 dark:text-sky-400 mb-3">
-              <span className="font-semibold uppercase tracking-wider text-[11px]">SmartChain Innovation Hackathon</span>
-              <span aria-hidden="true">·</span>
-              <span>Global Discovery & Action Platform</span>
+            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-[11px] font-mono text-neutral-600 dark:text-neutral-300 bg-black/[0.04] dark:bg-white/[0.06] border border-black/[0.06] dark:border-white/[0.08] mb-4 w-fit">
+              <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+              <span>EXPLORE VERIFIED OPPORTUNITIES</span>
+              <span className="text-neutral-400">·</span>
+              <span className="font-semibold">Global Directory</span>
             </div>
 
-            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl dark:text-white leading-[1.15]">
-              Never miss an opportunity that could change your future.
+            <h1 className="text-3xl font-extrabold tracking-tight text-neutral-950 sm:text-4xl dark:text-white leading-[1.15]">
+              Find opportunities tailored to your background.
             </h1>
 
-            <p className="mt-4 text-base text-slate-600 dark:text-slate-300 max-w-2xl leading-relaxed">
-              Find scholarships, grants, hackathons, and accelerators matched directly to your background.
-              Verify eligibility, audit official source documents, and track application deadlines before they pass.
+            <p className="mt-3 text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 max-w-xl leading-relaxed">
+              Explore scholarships, grants, hackathons, and accelerators verified against official institutional requirements.
             </p>
 
             {/* Search Input Box */}
-            <div className="mt-6 flex flex-col sm:flex-row gap-3 max-w-2xl">
+            <div className="mt-6 flex flex-col sm:flex-row gap-2.5 max-w-xl">
               <div className="relative flex-1">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search by keywords, organization, scholarship name, grant..."
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 dark:border-slate-700 dark:bg-slate-800/90 dark:text-white dark:placeholder-slate-400 dark:focus:border-sky-400"
+                  className="w-full rounded-xl border border-neutral-300 dark:border-white/[0.12] bg-white dark:bg-[#111113] py-2.5 pl-10 pr-10 text-xs sm:text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all shadow-xs"
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
                   >
                     Clear
                   </button>
                 )}
               </div>
               <button
-                onClick={onExploreTracker}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800 transition-colors dark:bg-sky-500 dark:hover:bg-sky-400 dark:text-slate-950 shrink-0"
+                onClick={onLaunchAgent}
+                className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-neutral-950 px-4 py-2.5 text-xs font-semibold text-white hover:bg-neutral-800 transition-all dark:bg-white dark:hover:bg-neutral-200 dark:text-neutral-950 shrink-0 shadow-xs"
               >
-                <span>My Tracker</span>
-                <ArrowRight className="h-4 w-4" />
+                <Bot className="h-3.5 w-3.5 text-indigo-400 dark:text-indigo-600" />
+                <span>Ask Agentic Copilot</span>
               </button>
-            </div>
-
-            {/* 4 Pillars Summary */}
-            <div className="mt-8 grid grid-cols-2 gap-4 border-t border-slate-100 pt-6 sm:grid-cols-4 dark:border-slate-800/80 text-xs">
-              <div>
-                <span className="font-semibold text-slate-900 dark:text-white block mb-0.5">01. Discover</span>
-                <span className="text-slate-500 dark:text-slate-400">Aggregated from verified global sources</span>
-              </div>
-              <div>
-                <span className="font-semibold text-slate-900 dark:text-white block mb-0.5">02. Match</span>
-                <span className="text-slate-500 dark:text-slate-400">Ranked by skills, stage, and interests</span>
-              </div>
-              <div>
-                <span className="font-semibold text-slate-900 dark:text-white block mb-0.5">03. Verify</span>
-                <span className="text-slate-500 dark:text-slate-400">Direct source link & audit dates</span>
-              </div>
-              <div>
-                <span className="font-semibold text-slate-900 dark:text-white block mb-0.5">04. Take Action</span>
-                <span className="text-slate-500 dark:text-slate-400">Kanban tracker & .ics reminders</span>
-              </div>
             </div>
           </div>
 
-          {/* Right Column: High-Fidelity Visual Asset + Active Persona Card */}
-          <div className="flex flex-col lg:col-span-5">
-            <div className="relative overflow-hidden rounded-2xl border border-slate-200 shadow-sm dark:border-slate-800 h-full min-h-[300px]">
-              <img
-                src="/src/assets/images/hero_opportunity_radar_1791893407161.jpg"
-                alt="Ambitious innovators and students collaborating on opportunities"
-                referrerPolicy="no-referrer"
-                className="h-full w-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/30 to-transparent" />
-              
-              {/* Overlay with current active persona */}
-              <div className="absolute bottom-0 inset-x-0 p-5 text-white">
-                <div className="flex items-center justify-between text-xs mb-1">
-                  <span className="text-sky-300 font-medium">Active Simulation Persona</span>
-                  <span className="font-mono text-slate-300">{userProfile.stage}</span>
+          {/* Right Column: Persona Matching Preview Box */}
+          <div className="flex flex-col justify-center lg:col-span-5">
+            <div className="rounded-2xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#0c0c0e] p-5 shadow-xs">
+              <div className="flex items-center justify-between pb-3 border-b border-black/[0.06] dark:border-white/[0.06]">
+                <div className="flex items-center gap-2">
+                  <div className="h-6 w-6 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-mono text-[10px] font-bold">
+                    AI
+                  </div>
+                  <span className="text-xs font-semibold text-neutral-900 dark:text-white">Active Profile Fit</span>
                 </div>
-                <h3 className="text-base font-bold text-white">
-                  {userProfile.name} ({userProfile.country})
-                </h3>
-                <p className="text-xs text-slate-200 mt-1 line-clamp-2">
-                  Interests: {userProfile.interests.slice(0, 3).join(', ')} · Target: {userProfile.preferredCategories.join(', ')}
-                </p>
-                <div className="mt-3 flex flex-wrap gap-1.5 pt-2 border-t border-white/10 text-[11px]">
-                  {(['student', 'developer', 'founder', 'professional'] as PersonaType[]).map((pKey) => (
-                    <button
-                      key={pKey}
-                      onClick={() => setUserProfile(DEMO_PROFILES[pKey])}
-                      className={`px-2.5 py-1 rounded-md transition-colors ${
-                        userProfile.persona === pKey
-                          ? 'bg-sky-500 text-white font-semibold'
-                          : 'bg-black/40 text-slate-200 hover:bg-black/60'
-                      }`}
-                    >
-                      {pKey.charAt(0).toUpperCase() + pKey.slice(1)} View
-                    </button>
-                  ))}
+                <span className="font-mono text-[10px] text-neutral-400 capitalize">
+                  {userProfile.persona} · {userProfile.country}
+                </span>
+              </div>
+
+              <div className="pt-3 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-neutral-500 dark:text-neutral-400">Target Match:</span>
+                  <span className="font-medium text-neutral-900 dark:text-white">
+                    {userProfile.preferredCategories?.slice(0, 3).join(', ') || 'All Categories'}
+                  </span>
                 </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-neutral-500 dark:text-neutral-400">Education / Stage:</span>
+                  <span className="font-medium capitalize text-neutral-900 dark:text-white">
+                    {userProfile.stage}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-neutral-500 dark:text-neutral-400">Format:</span>
+                  <span className="font-medium capitalize text-neutral-900 dark:text-white">
+                    {userProfile.preferredFormat || 'Global'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-black/[0.06] dark:border-white/[0.06] flex items-center justify-between">
+                <span className="text-[11px] text-neutral-400">Rankings updated automatically</span>
+                <button
+                  onClick={onExploreTracker}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+                >
+                  <span>My Tracker</span>
+                  <ArrowRight className="h-3 w-3" />
+                </button>
               </div>
             </div>
           </div>

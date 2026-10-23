@@ -508,49 +508,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
       </section>
 
-      {/* =========================================================================
-          SECTION 5: FOOTER (Clean & Architectural)
-          ========================================================================= */}
-      <footer className="border-t border-black/[0.08] dark:border-white/[0.08] bg-[#FAFAFA] dark:bg-[#09090b] py-12 text-xs text-neutral-500 dark:text-neutral-400">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-6 pb-8 border-b border-black/[0.06] dark:border-white/[0.06]">
-            <div className="flex items-center gap-2.5">
-              <div className="h-6 w-6 rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-black flex items-center justify-center font-mono text-[10px] font-bold">
-                OR
-              </div>
-              <span className="font-extrabold text-neutral-900 dark:text-white text-sm">
-                OpportunityRadar
-              </span>
-              <span className="text-neutral-400 font-mono text-[11px]">· v2.0 Autonomous Engine</span>
-            </div>
-
-            <div className="flex items-center gap-6 text-xs">
-              <button onClick={onNavigateToFeed} className="hover:text-neutral-900 dark:hover:text-white transition-colors">
-                Explore
-              </button>
-              <button onClick={onNavigateToTracker} className="hover:text-neutral-900 dark:hover:text-white transition-colors">
-                Tracker
-              </button>
-              <button onClick={onNavigateToAgent} className="hover:text-neutral-900 dark:hover:text-white transition-colors">
-                Agent Copilot
-              </button>
-              <button onClick={onNavigateToCommunity} className="hover:text-neutral-900 dark:hover:text-white transition-colors">
-                Community
-              </button>
-            </div>
-          </div>
-
-          <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-neutral-400">
-            <span>© 2026 OpportunityRadar. All opportunities verified from official institutional repositories.</span>
-            <div className="flex items-center gap-4">
-              <span>Zero telemetry</span>
-              <span>·</span>
-              <span>Local storage encrypted</span>
-            </div>
-          </div>
-        </div>
-      </footer>
-
+      {/* End of Landing Page Sections */}
     </div>
   );
 };

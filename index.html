@@ -4,11 +4,47 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>OpportunityRadar — AI-Powered Opportunity Discovery & Application Platform</title>
-    <meta name="description" content="Discover scholarships, grants, jobs, hackathons, and accelerators with AI matching, eligibility verification, and deadline tracking." />
+    <meta name="description" content="AI-powered discovery, eligibility verification, and application tracker for scholarships, grants, hackathons, and global opportunities." />
     <meta property="og:title" content="OpportunityRadar — AI-Powered Opportunity Discovery & Application Platform" />
-    <meta property="og:description" content="Discover scholarships, grants, jobs, hackathons, and accelerators with AI matching, eligibility verification, and deadline tracking." />
+    <meta property="og:description" content="AI-powered discovery, eligibility verification, and application tracker for scholarships, grants, hackathons, and global opportunities." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
+    <script>
+      // Defensive shim to allow browser extensions/interceptors to set window.fetch
+      (function() {
+        try {
+          var originalFetch = window.fetch;
+          var activeFetch = typeof originalFetch === 'function' ? originalFetch.bind(window) : originalFetch;
+          Object.defineProperty(window, 'fetch', {
+            configurable: true,
+            enumerable: true,
+            get: function() {
+              return activeFetch;
+            },
+            set: function(newFetch) {
+              activeFetch = newFetch;
+            }
+          });
+        } catch (e) {
+          try {
+            var proto = Object.getPrototypeOf(window);
+            if (proto && Object.getOwnPropertyDescriptor(proto, 'fetch')) {
+              var protoFetch = window.fetch;
+              Object.defineProperty(proto, 'fetch', {
+                configurable: true,
+                enumerable: true,
+                get: function() {
+                  return protoFetch;
+                },
+                set: function(newFetch) {
+                  protoFetch = newFetch;
+                }
+              });
+            }
+          } catch (ignored) {}
+        }
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">

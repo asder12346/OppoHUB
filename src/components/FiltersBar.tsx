@@ -1,6 +1,6 @@
 import React from 'react';
 import { OpportunityCategory, LocationType, FundingType } from '../types';
-import { Filter, SlidersHorizontal, RotateCcw } from 'lucide-react';
+import { Filter, SlidersHorizontal, RotateCcw, ShieldCheck } from 'lucide-react';
 
 interface FiltersBarProps {
   selectedCategory: 'all' | OpportunityCategory;
@@ -21,7 +21,7 @@ interface FiltersBarProps {
 }
 
 const CATEGORIES: { label: string; value: 'all' | OpportunityCategory }[] = [
-  { label: 'All Types', value: 'all' },
+  { label: 'All Opportunities', value: 'all' },
   { label: 'Scholarships', value: 'scholarship' },
   { label: 'Hackathons', value: 'hackathon' },
   { label: 'Accelerators', value: 'accelerator' },
@@ -56,22 +56,22 @@ export const FiltersBar: React.FC<FiltersBarProps> = ({
     urgentOnly;
 
   return (
-    <div className="border-b border-slate-200 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/50 py-4 px-4 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl flex flex-col gap-3">
+    <div className="border-b border-black/[0.08] dark:border-white/[0.08] bg-white/70 dark:bg-[#09090b]/90 backdrop-blur-md py-3.5 px-4 sm:px-6 lg:px-8 transition-colors">
+      <div className="mx-auto max-w-6xl flex flex-col gap-3">
         
-        {/* Row 1: Category segmented buttons */}
+        {/* Row 1: Category segmented buttons in Cursor style */}
         <div className="flex items-center justify-between gap-4 overflow-x-auto pb-1 scrollbar-none">
-          <div className="flex items-center gap-1.5 p-1 bg-slate-200/70 dark:bg-slate-800 rounded-xl">
+          <div className="flex items-center gap-1 p-1 bg-black/[0.04] dark:bg-white/[0.05] rounded-xl border border-black/[0.04] dark:border-white/[0.05]">
             {CATEGORIES.map((cat) => {
               const active = selectedCategory === cat.value;
               return (
                 <button
                   key={cat.value}
                   onClick={() => setSelectedCategory(cat.value)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 ${
+                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all whitespace-nowrap shrink-0 ${
                     active
-                      ? 'bg-white text-slate-900 shadow-xs dark:bg-slate-700 dark:text-white'
-                      : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                      ? 'bg-white text-neutral-950 shadow-xs dark:bg-white dark:text-black font-semibold'
+                      : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white'
                   }`}
                 >
                   {cat.label}
@@ -80,99 +80,93 @@ export const FiltersBar: React.FC<FiltersBarProps> = ({
             })}
           </div>
 
-          {/* Counts & Clear */}
-          <div className="flex items-center gap-3 shrink-0 text-xs text-slate-500 dark:text-slate-400">
-            <span className="font-mono tabular-nums">
-              Showing {filteredCount} of {totalCount}
-            </span>
-            {isFiltered && (
-              <button
-                onClick={onResetFilters}
-                className="inline-flex items-center gap-1 text-sky-600 hover:text-sky-700 dark:text-sky-400 dark:hover:text-sky-300 font-medium"
-              >
-                <RotateCcw className="h-3 w-3" />
-                Reset
-              </button>
-            )}
+          {/* Result Count Badge */}
+          <div className="hidden sm:flex items-center gap-2 text-xs font-mono text-neutral-400 shrink-0">
+            <span>Showing</span>
+            <span className="font-semibold text-neutral-900 dark:text-white font-mono">{filteredCount}</span>
+            <span>of {totalCount} verified</span>
           </div>
         </div>
 
-        {/* Row 2: Secondary Filters (Format, Funding, Sorting, Toggles) */}
+        {/* Row 2: Secondary Dropdown & Toggle Filters */}
         <div className="flex flex-wrap items-center justify-between gap-3 text-xs pt-1">
           <div className="flex flex-wrap items-center gap-2">
             
-            {/* Format Selector */}
-            <div className="flex items-center gap-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1">
-              <span className="text-slate-400 font-medium">Format:</span>
-              <select
-                value={selectedFormat}
-                onChange={(e) => setSelectedFormat(e.target.value as 'all' | LocationType)}
-                className="bg-transparent text-slate-700 dark:text-slate-300 font-medium outline-none cursor-pointer"
-              >
-                <option value="all" className="dark:bg-slate-800">All Locations</option>
-                <option value="remote" className="dark:bg-slate-800">Remote Only</option>
-                <option value="in-person" className="dark:bg-slate-800">In-Person</option>
-                <option value="hybrid" className="dark:bg-slate-800">Hybrid</option>
-              </select>
-            </div>
-
-            {/* Funding Selector */}
-            <div className="flex items-center gap-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1">
-              <span className="text-slate-400 font-medium">Funding:</span>
-              <select
-                value={selectedFunding}
-                onChange={(e) => setSelectedFunding(e.target.value as 'all' | FundingType)}
-                className="bg-transparent text-slate-700 dark:text-slate-300 font-medium outline-none cursor-pointer"
-              >
-                <option value="all" className="dark:bg-slate-800">All Funding</option>
-                <option value="fully-funded" className="dark:bg-slate-800">Fully Funded</option>
-                <option value="grant-prize" className="dark:bg-slate-800">Grants & Prizes</option>
-                <option value="partially-funded" className="dark:bg-slate-800">Partially Funded</option>
-                <option value="free" className="dark:bg-slate-800">Free / Stipend</option>
-              </select>
-            </div>
-
-            {/* Urgent Deadline Checkbox */}
-            <button
-              onClick={() => setUrgentOnly(!urgentOnly)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-colors ${
-                urgentOnly
-                  ? 'border-amber-500 bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-600 font-medium'
-                  : 'border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
+            {/* Format Filter */}
+            <select
+              value={selectedFormat}
+              onChange={(e) => setSelectedFormat(e.target.value as any)}
+              className="rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#111113] py-1.5 px-2.5 text-xs text-neutral-800 dark:text-neutral-200 focus:border-indigo-500 focus:outline-none transition-all cursor-pointer"
             >
-              <span>Closing Soon (≤ 14d)</span>
-            </button>
+              <option value="all">Any Format</option>
+              <option value="remote">Remote</option>
+              <option value="in-person">In-Person / Onsite</option>
+              <option value="hybrid">Hybrid</option>
+            </select>
 
-            {/* Verified Only Checkbox */}
+            {/* Funding Filter */}
+            <select
+              value={selectedFunding}
+              onChange={(e) => setSelectedFunding(e.target.value as any)}
+              className="rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#111113] py-1.5 px-2.5 text-xs text-neutral-800 dark:text-neutral-200 focus:border-indigo-500 focus:outline-none transition-all cursor-pointer"
+            >
+              <option value="all">Any Funding</option>
+              <option value="fully-funded">Fully Funded</option>
+              <option value="partially-funded">Partially Funded</option>
+              <option value="unpaid">Non-Funded / Bounties</option>
+            </select>
+
+            {/* Verified Sources Toggle */}
             <button
               onClick={() => setShowOnlyVerified(!showOnlyVerified)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-colors ${
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-all text-xs ${
                 showOnlyVerified
-                  ? 'border-sky-500 bg-sky-50 text-sky-800 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-600 font-medium'
-                  : 'border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold'
+                  : 'border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#111113] text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-700'
               }`}
             >
-              <span>Verified Sources Only</span>
+              <ShieldCheck className="h-3.5 w-3.5" />
+              <span>Verified Only</span>
             </button>
-          </div>
 
-          {/* Sort By Dropdown */}
-          <div className="flex items-center gap-2">
-            <span className="text-slate-500 dark:text-slate-400">Sort by:</span>
-            <div className="flex items-center gap-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as 'match' | 'deadline' | 'recent')}
-                className="bg-transparent text-slate-800 dark:text-slate-200 font-medium outline-none cursor-pointer"
+            {/* Closing Soon Toggle */}
+            <button
+              onClick={() => setUrgentOnly(!urgentOnly)}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-all text-xs ${
+                urgentOnly
+                  ? 'border-amber-500/50 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold'
+                  : 'border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#111113] text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-700'
+              }`}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+              <span>Closing in 14 Days</span>
+            </button>
+
+            {/* Reset button */}
+            {isFiltered && (
+              <button
+                onClick={onResetFilters}
+                className="inline-flex items-center gap-1 text-xs text-neutral-400 hover:text-neutral-900 dark:hover:text-white px-2 py-1 transition-colors"
               >
-                <option value="match" className="dark:bg-slate-800">Best AI Match Score</option>
-                <option value="deadline" className="dark:bg-slate-800">Earliest Deadline</option>
-                <option value="recent" className="dark:bg-slate-800">Recently Verified</option>
-              </select>
-            </div>
+                <RotateCcw className="h-3 w-3" />
+                <span>Reset</span>
+              </button>
+            )}
           </div>
 
+          {/* Sort By Selector */}
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-mono text-neutral-400">Sort:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#111113] py-1.5 px-2.5 text-xs font-medium text-neutral-800 dark:text-neutral-200 focus:border-indigo-500 focus:outline-none transition-all cursor-pointer"
+            >
+              <option value="match">AI Profile Match</option>
+              <option value="deadline">Approaching Deadline</option>
+              <option value="recent">Recently Verified</option>
+            </select>
+          </div>
         </div>
 
       </div>

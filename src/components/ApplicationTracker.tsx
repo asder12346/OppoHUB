@@ -105,13 +105,13 @@ export const ApplicationTracker: React.FC<ApplicationTrackerProps> = ({
         </div>
 
         {/* View mode toggle */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-200/70 dark:bg-slate-800 rounded-xl self-start sm:self-auto">
+        <div className="flex items-center gap-1.5 p-1 bg-black/[0.04] dark:bg-white/[0.05] rounded-xl self-start sm:self-auto border border-black/[0.04] dark:border-white/[0.06]">
           <button
             onClick={() => setViewMode('kanban')}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
               viewMode === 'kanban'
-                ? 'bg-white text-slate-900 shadow-xs dark:bg-slate-700 dark:text-white'
-                : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                ? 'bg-white text-neutral-900 shadow-xs dark:bg-white dark:text-black font-semibold'
+                : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white'
             }`}
           >
             <LayoutGrid className="h-3.5 w-3.5" />
@@ -121,8 +121,8 @@ export const ApplicationTracker: React.FC<ApplicationTrackerProps> = ({
             onClick={() => setViewMode('list')}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
               viewMode === 'list'
-                ? 'bg-white text-slate-900 shadow-xs dark:bg-slate-700 dark:text-white'
-                : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                ? 'bg-white text-neutral-900 shadow-xs dark:bg-white dark:text-black font-semibold'
+                : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white'
             }`}
           >
             <List className="h-3.5 w-3.5" />
@@ -132,12 +132,12 @@ export const ApplicationTracker: React.FC<ApplicationTrackerProps> = ({
       </div>
 
       {trackerItems.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 p-12 text-center bg-white dark:bg-slate-900">
-          <Clock className="mx-auto h-10 w-10 text-slate-400 mb-3" />
-          <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+        <div className="rounded-2xl border border-dashed border-neutral-300 dark:border-white/[0.08] p-12 text-center bg-white dark:bg-[#0c0c0e]">
+          <Clock className="mx-auto h-10 w-10 text-neutral-400 mb-3" />
+          <h3 className="text-base font-semibold text-neutral-900 dark:text-white">
             No tracked opportunities yet
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto mt-1 mb-4">
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 max-w-md mx-auto mt-1 mb-4">
             Browse the discovery feed and click "Save" on scholarships, hackathons, or grants to manage your preparation milestones here.
           </p>
         </div>
@@ -149,17 +149,17 @@ export const ApplicationTracker: React.FC<ApplicationTrackerProps> = ({
             return (
               <div
                 key={col.id}
-                className="flex flex-col rounded-xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-900/60 min-h-[450px]"
+                className="flex flex-col rounded-2xl border border-neutral-200/80 bg-neutral-50/70 p-3.5 dark:border-white/[0.08] dark:bg-[#09090b] min-h-[450px]"
               >
                 {/* Column Header */}
-                <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-200 dark:border-slate-800">
+                <div className="flex items-center justify-between pb-2 mb-3 border-b border-neutral-200 dark:border-white/[0.06]">
                   <div>
-                    <h4 className="text-xs font-bold text-slate-900 dark:text-white">
+                    <h4 className="text-xs font-bold text-neutral-900 dark:text-white">
                       {col.label}
                     </h4>
-                    <span className="text-[10px] text-slate-400 block">{col.desc}</span>
+                    <span className="text-[10px] text-neutral-400 block">{col.desc}</span>
                   </div>
-                  <span className="font-mono text-xs font-bold tabular-nums text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
+                  <span className="font-mono text-xs font-bold tabular-nums text-neutral-600 dark:text-neutral-300 bg-white dark:bg-[#111113] px-2 py-0.5 rounded-md border border-neutral-200 dark:border-white/[0.08]">
                     {itemsInStage.length}
                   </span>
                 </div>
@@ -176,7 +176,7 @@ export const ApplicationTracker: React.FC<ApplicationTrackerProps> = ({
                     return (
                       <div
                         key={item.id}
-                        className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-xs transition-all hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700 text-xs"
+                        className="rounded-xl border border-neutral-200 bg-white p-3.5 shadow-xs transition-all hover:border-neutral-300 dark:border-white/[0.08] dark:bg-[#0e0e11] dark:hover:border-white/[0.16] text-xs"
                       >
                         {/* Title & Organization */}
                         <div
