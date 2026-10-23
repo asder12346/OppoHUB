@@ -38,7 +38,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToTab, onOpenContact }
   };
 
   return (
-    <footer className="relative border-t border-black/[0.08] dark:border-white/[0.08] bg-[#FAFAFA] dark:bg-[#070709] text-neutral-600 dark:text-neutral-400 text-xs overflow-hidden transition-colors">
+    <footer className="relative border-t border-black/[0.08] dark:border-white/[0.08] bg-[#FAFAFA] dark:bg-[#070709] text-neutral-600 dark:text-neutral-400 text-xs overflow-hidden transition-colors mt-20 sm:mt-28">
       
       {/* Subtle Atmospheric Glow at Footer Bottom */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-indigo-500/[0.03] dark:bg-indigo-600/[0.06] rounded-full blur-[140px] pointer-events-none -z-10" />
@@ -46,8 +46,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToTab, onOpenContact }
       {/* =========================================================================
           TOP TIER: INTERACTIVE CONTACT & INGESTION BOX
           ========================================================================= */}
-      <div className="mx-auto max-w-6xl px-4 pt-14 pb-12 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#0c0c0e] p-6 sm:p-8 shadow-xs">
+      <div className="mx-auto max-w-6xl px-4 pt-16 pb-12 sm:px-6 lg:px-8">
+        <div className="rounded-2xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#0c0c0e] p-6 sm:p-8 lg:p-10 shadow-xs mb-16 sm:mb-20">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             
             <div className="lg:col-span-7">

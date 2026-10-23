@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sun, Moon, Bell, Sparkles, Menu, X, ArrowRight, User } from 'lucide-react';
+import { Sun, Moon, Menu, X, ArrowRight } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { UserProfile } from '../types';
 
@@ -11,8 +11,8 @@ interface HeaderProps {
   onOpenLogin: () => void;
   onOpenSignUp: () => void;
   onOpenProfile: () => void;
-  onOpenReminders: () => void;
-  urgentDeadlinesCount: number;
+  onOpenReminders?: () => void;
+  urgentDeadlinesCount?: number;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -22,8 +22,6 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenLogin,
   onOpenSignUp,
   onOpenProfile,
-  onOpenReminders,
-  urgentDeadlinesCount
 }) => {
   const { theme, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -41,10 +39,10 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="sticky top-0 z-50 border-b border-black/[0.08] dark:border-white/[0.08] bg-white/80 dark:bg-[#09090b]/80 backdrop-blur-xl transition-colors">
-      <div className="mx-auto flex h-13 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="relative mx-auto flex h-13 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
         
         {/* Left: Cursor-style Minimalist Brand Mark */}
-        <div className="flex items-center gap-7">
+        <div className="flex items-center">
           <button
             onClick={() => setCurrentTab('landing')}
             className="flex items-center gap-2.5 text-left text-sm font-bold tracking-tight text-neutral-900 transition-colors dark:text-white group"
@@ -59,50 +57,36 @@ export const Header: React.FC<HeaderProps> = ({
               OpportunityRadar
             </span>
           </button>
-
-          {/* Center Navigation Links: Exactly Overview, Explore, Agentic */}
-          <nav className="hidden md:flex items-center gap-1 text-xs font-medium text-neutral-600 dark:text-neutral-400">
-            {primaryNavItems.map((item) => {
-              const isActive = currentTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setCurrentTab(item.id)}
-                  className={`relative px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 ${
-                    isActive
-                      ? 'text-neutral-950 dark:text-white font-semibold bg-black/[0.05] dark:bg-white/[0.08]'
-                      : 'hover:text-neutral-950 dark:hover:text-white hover:bg-black/[0.02] dark:hover:bg-white/[0.04]'
-                  }`}
-                >
-                  {item.isAgent && (
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500" />
-                    </span>
-                  )}
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-          </nav>
         </div>
 
-        {/* Right Zone: Controls, Login, and Sign Up */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          
-          {/* Deadline reminder bell */}
-          <button
-            onClick={onOpenReminders}
-            className="relative p-1.5 rounded-md text-neutral-500 hover:text-neutral-950 dark:text-neutral-400 dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors"
-            title="Deadline Reminders"
-            aria-label="Deadline reminders"
-          >
-            <Bell className="h-4 w-4" />
-            {urgentDeadlinesCount > 0 && (
-              <span className="absolute top-1 right-1 flex h-2 w-2 rounded-full bg-amber-500" />
-            )}
-          </button>
+        {/* Center Navigation Links: Perfectly Centered (Overview, Explore, Agentic) */}
+        <nav className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-1 text-xs font-medium text-neutral-600 dark:text-neutral-400">
+          {primaryNavItems.map((item) => {
+            const isActive = currentTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setCurrentTab(item.id)}
+                className={`relative px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 ${
+                  isActive
+                    ? 'text-neutral-950 dark:text-white font-semibold bg-black/[0.05] dark:bg-white/[0.08]'
+                    : 'hover:text-neutral-950 dark:hover:text-white hover:bg-black/[0.02] dark:hover:bg-white/[0.04]'
+                }`}
+              >
+                {item.isAgent && (
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500" />
+                  </span>
+                )}
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
 
+        {/* Right Zone: Controls, Login, and Sign Up (without notification bell) */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {/* Dark Mode Toggle */}
           <button
             onClick={toggleTheme}
