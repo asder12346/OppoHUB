@@ -373,29 +373,61 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
             <div>
               <label className="font-medium text-slate-600 dark:text-slate-400 block mb-1">
-                GitHub / Portfolio Link
+                University / Institution
               </label>
               <input
-                type="url"
-                value={profile.githubOrPortfolio || ''}
-                onChange={(e) => setProfile({ ...profile, githubOrPortfolio: e.target.value })}
-                placeholder="https://github.com/yourhandle"
+                type="text"
+                value={profile.university || ''}
+                onChange={(e) => setProfile({ ...profile, university: e.target.value })}
+                placeholder="e.g. University of Lagos / Imperial College"
                 className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-slate-900 dark:text-white"
               />
             </div>
 
             <div>
               <label className="font-medium text-slate-600 dark:text-slate-400 block mb-1">
-                Personal Website
+                LinkedIn Profile URL
               </label>
               <input
                 type="url"
-                value={profile.website || ''}
-                onChange={(e) => setProfile({ ...profile, website: e.target.value })}
-                placeholder="https://yourdomain.com"
-                className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-slate-900 dark:text-white"
+                value={profile.linkedin || ''}
+                onChange={(e) => setProfile({ ...profile, linkedin: e.target.value })}
+                placeholder="https://linkedin.com/in/username"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-slate-900 dark:text-white font-mono"
               />
             </div>
+
+            <div>
+              <label className="font-medium text-slate-600 dark:text-slate-400 block mb-1">
+                GitHub / Portfolio Link
+              </label>
+              <input
+                type="url"
+                value={profile.github || profile.githubOrPortfolio || ''}
+                onChange={(e) => setProfile({ ...profile, github: e.target.value, githubOrPortfolio: e.target.value })}
+                placeholder="https://github.com/yourhandle"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-slate-900 dark:text-white font-mono"
+              />
+            </div>
+          </div>
+
+          {/* Statement of Ambition for AI Agent */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="font-medium text-slate-600 dark:text-slate-400">
+                Statement of Ambition (Active in AI Agent Copilot)
+              </label>
+              <span className="text-[10px] text-sky-600 dark:text-sky-400 font-mono">
+                Used to draft personal statements
+              </span>
+            </div>
+            <textarea
+              rows={2}
+              value={profile.statementOfAmbition || profile.careerGoals || ''}
+              onChange={(e) => setProfile({ ...profile, statementOfAmbition: e.target.value, careerGoals: e.target.value })}
+              placeholder="e.g. Seeking fully-funded MSc scholarships in Artificial Intelligence and Web3 grants in 2026..."
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-slate-900 dark:text-white leading-relaxed text-xs"
+            />
           </div>
 
           {/* Quick Demo Persona Switcher */}

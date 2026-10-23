@@ -138,7 +138,7 @@ export async function runOpportunityAgent(
   const checklistItems = [
     { id: 'chk-1', text: `Verify GPA/academic cutoff & institutional guidelines for ${matched[0]?.title || 'primary opportunity'}`, done: false },
     { id: 'chk-2', text: `Prepare and notarize: ${missingDocs.slice(0, 2).join(' and ')}`, done: false },
-    { id: 'chk-3', text: `Draft personal statement of ambition aligning ${userProfile.skills.slice(0, 2).join(' & ')} with host objectives`, done: false },
+    { id: 'chk-3', text: `Draft personal statement of ambition aligning ${userProfile.skills.slice(0, 2).join(' & ')} from ${userProfile.university || 'academic institution'} with host objectives`, done: false },
     { id: 'chk-4', text: `Finalize application portal submission at least 5 business days before ${matched[0]?.deadline || 'deadline cutoff'}`, done: false }
   ];
 
@@ -146,29 +146,37 @@ export async function runOpportunityAgent(
     try {
       const ai = new GoogleGenAI({ apiKey });
       const promptText = `You are the OpportunityRadar Autonomous Opportunity Agent.
-User Profile:
-- Name: ${userProfile.displayName || userProfile.name || userProfile.username}
-- Persona: ${userProfile.persona} (${userProfile.educationLevel || userProfile.stage})
-- Country/Nationality: ${userProfile.country} / ${userProfile.nationality}
-- Skills: ${userProfile.skills.join(', ')}
-- Interests: ${userProfile.interests.join(', ')}
-- Career Goals: ${userProfile.careerGoals}
+User Candidate Profile:
+- Full Name: ${userProfile.displayName || userProfile.name || userProfile.username}
+- Current Institution / University: ${userProfile.university || 'Independent Scholar / University Graduate'}
+- LinkedIn Profile: ${userProfile.linkedin || 'Provided in application dossier'}
+- GitHub / Portfolio: ${userProfile.github || userProfile.portfolioUrl || 'Provided in technical portfolio'}
+- Country / Nationality: ${userProfile.country} (${userProfile.nationality || userProfile.country})
+- Focus Track / Persona: ${userProfile.persona} (${userProfile.educationLevel || userProfile.stage})
+- Field of Study: ${userProfile.fieldOfStudy}
+- Core Skills & Expertise: ${userProfile.skills.join(', ')}
+- Notable Achievements: ${(userProfile.achievements || []).join('; ') || 'High academic standing & technical project leadership'}
+- Statement of Ambition / Goal: ${userProfile.statementOfAmbition || userProfile.careerGoals}
 
-User Directive: "${prompt}"
+User Direct Directive: "${prompt}"
 
-Identified Opportunities:
-${matched.map(m => `- ${m.title} (${m.organisation || m.organization}) | Deadline: ${m.deadline} | Award: ${m.fundingDetails || m.fundingAmount}`).join('\n')}
+Identified Target Opportunities:
+${matched.map(m => `- ${m.title} (${m.organisation || m.organization}) | Category: ${m.category} | Deadline: ${m.deadline} | Award: ${m.fundingDetails || m.fundingAmount}`).join('\n')}
+
+Instructions:
+1. Address the applicant directly and tailor your recommendations to their specific university (${userProfile.university || 'their background'}), LinkedIn qualifications, technical skills (${userProfile.skills.slice(0, 3).join(', ')}), and explicit Statement of Ambition.
+2. In the draft Statement of Ambition, craft a rigorous, highly persuasive narrative that directly connects their projects/university experience, skills, and LinkedIn credentials with the target institution's objectives.
 
 Generate a JSON response:
 {
-  "summary": "Crisp 2-3 sentence strategic briefing detailing why these exact opportunities were selected and how the applicant should position themselves.",
-  "eligibilityVerdict": "Clear 1-sentence confirmation of applicant eligibility status and key condition to check.",
+  "summary": "Crisp 2-3 sentence strategic briefing detailing why these exact opportunities fit the candidate's profile, how their university and LinkedIn background positions them, and key leverage points.",
+  "eligibilityVerdict": "Clear 1-sentence confirmation of applicant eligibility status, citing their nationality/degree alignment.",
   "recommendedNextSteps": ["Step 1", "Step 2", "Step 3"],
   "checklist": ["Actionable task 1", "Actionable task 2", "Actionable task 3", "Actionable task 4"],
   "draftDocument": {
-    "title": "Application Statement for ${matched[0]?.title || 'Primary Target'}",
+    "title": "Statement of Ambition: ${matched[0]?.title || 'Target Program'}",
     "type": "Statement of Ambition",
-    "content": "A high-impact 200-word statement that directly links the user's background, skills, and ambition to the opportunity."
+    "content": "A high-impact 200-250 word statement that weaves the user's name, institution (${userProfile.university || 'background'}), technical skills, and ambition into a compelling proposal for the reviewers."
   }
 }`;
 
@@ -201,18 +209,18 @@ Generate a JSON response:
 
   const top = matched[0];
   if (!generatedSummary) {
-    generatedSummary = `Autonomous Agent successfully parsed your directives and audited ${allOpportunities.length} live opportunities. Isolated ${matched.length} primary targets headlined by "${top?.title || 'Featured Program'}", strongly aligned with your ${userProfile.skills.slice(0, 2).join(' & ')} domain expertise and ${userProfile.country} eligibility profile.`;
+    generatedSummary = `Autonomous Agent audited ${allOpportunities.length} live records for ${userProfile.displayName || userProfile.name}. Isolated ${matched.length} priority targets headlined by "${top?.title || 'Featured Program'}", strongly aligned with your ${userProfile.skills.slice(0, 2).join(' & ')} background at ${userProfile.university || userProfile.country} and your stated ambition to ${userProfile.statementOfAmbition || userProfile.careerGoals}.`;
   }
 
   if (!generatedEssay && top) {
     generatedEssay = {
       title: `Statement of Ambition: ${top.title}`,
       type: 'Personal Statement Draft',
-      content: `As an ambitious ${userProfile.persona} based in ${userProfile.country} with dedicated expertise in ${userProfile.skills.slice(0, 3).join(', ')}, I am applying to ${top.title} to accelerate scalable impact. My background couples analytical rigor with an unwavering commitment to ${userProfile.interests[0] || 'innovation'}. Through ${top.organisation || top.organization || 'this institution'}, I aim to leverage the technical mentorship, peer cohort, and global network to realize my long-term ambition: ${userProfile.careerGoals || 'building transformative technology for community development'}.`
+      content: `I, ${userProfile.displayName || userProfile.name}, am writing to formally submit my candidacy for ${top.title}. With a strong academic and technical foundation in ${userProfile.fieldOfStudy}${userProfile.university ? ` developed at ${userProfile.university}` : ''}, and hands-on proficiency in ${userProfile.skills.slice(0, 3).join(', ')}, I have dedicated my career trajectory to building impactful solutions. My professional portfolio (documented via ${userProfile.linkedin ? 'LinkedIn: ' + userProfile.linkedin : 'my verified track record'}) demonstrates a consistent commitment to excellence${userProfile.achievements?.length ? `, including ${userProfile.achievements[0]}` : ''}.\n\nBy participating in ${top.title} organized by ${top.organisation || top.organization || 'this institution'}, I aim to deploy these capabilities to fulfill my core ambition: ${userProfile.statementOfAmbition || userProfile.careerGoals}. I look forward to contributing meaningfully to the cohort.`
     };
   }
 
-  updateStep(3, 'done', 'Deliverables ready: Action checklist compiled & statement draft generated.');
+  updateStep(3, 'done', 'Deliverables ready: Action checklist compiled & bespoke statement draft generated.');
 
   const durationMs = Date.now() - startTime;
 
@@ -257,8 +265,12 @@ export function generateDossierFile(plan: AgentActionPlan, opportunities: Opport
 
   const content = `# OPPORTUNITYRADAR — AUTONOMOUS APPLICATION DOSSIER
 Generated: ${new Date().toLocaleString()}
-Target Profile: ${userProfile.displayName || userProfile.name} (@${userProfile.username})
+Target Candidate: ${userProfile.displayName || userProfile.name} (@${userProfile.username})
+Institution / University: ${userProfile.university || 'Independent Scholar'}
+LinkedIn: ${userProfile.linkedin || 'N/A'}
+GitHub / Portfolio: ${userProfile.github || userProfile.portfolioUrl || 'N/A'}
 Focus Persona: ${userProfile.persona} | Location: ${userProfile.country}
+Stated Ambition: ${userProfile.statementOfAmbition || userProfile.careerGoals}
 
 ===================================================================
 1. EXECUTIVE AGENT BRIEFING
@@ -310,3 +322,56 @@ Verified Institutional Sources · All Data Stored Locally
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+
+/**
+ * Direct conversational Q&A with the agent, deeply grounded in the candidate's
+ * LinkedIn, University, Skills, Ambition, and Opportunity database.
+ */
+export async function answerAgentDirectQuestion(
+  question: string,
+  userProfile: UserProfile,
+  allOpportunities: Opportunity[]
+): Promise<string> {
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
+  if (!apiKey) {
+    return `Based on your profile as ${userProfile.displayName || userProfile.name} from ${userProfile.university || userProfile.country} with skills in ${userProfile.skills.slice(0, 3).join(', ')}: your credentials (including LinkedIn ${userProfile.linkedin || 'portfolio'}) align well with top programs. Make sure to emphasize your concrete project outcomes and align your personal statement with the stated mission of the reviewing committee.`;
+  }
+
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+    const prompt = `You are the OpportunityRadar AI Agent Copilot.
+Candidate Background:
+- Full Name: ${userProfile.displayName || userProfile.name}
+- University / Institute: ${userProfile.university || 'Independent Scholar'}
+- LinkedIn: ${userProfile.linkedin || 'Not provided'}
+- GitHub / Portfolio: ${userProfile.github || userProfile.portfolioUrl || 'Not provided'}
+- Degree Level: ${userProfile.educationLevel || userProfile.stage}
+- Field: ${userProfile.fieldOfStudy}
+- Core Skills: ${userProfile.skills.join(', ')}
+- Achievements: ${(userProfile.achievements || []).join('; ') || 'High academic standing'}
+- Ambition: ${userProfile.statementOfAmbition || userProfile.careerGoals}
+
+Candidate's Question:
+"${question}"
+
+Available Verified Opportunities (Top sample):
+${allOpportunities.slice(0, 8).map(o => `- ${o.title} (${o.organisation || o.organization}): ${o.category}, deadline: ${o.deadline}, funding: ${o.fundingDetails || o.fundingAmount}`).join('\n')}
+
+Instructions:
+Answer the question thoroughly, directly addressing the candidate by name. Explicitly integrate their university background, LinkedIn/GitHub presence, concrete skills, and stated ambition into your tactical advice. Be precise, strategic, and concise (under 180 words).`;
+
+    const res = await ai.models.generateContent({
+      model: 'gemini-3.8-flash',
+      contents: prompt,
+      config: {
+        temperature: 0.4
+      }
+    });
+
+    return res.text || 'Unable to generate response at this time.';
+  } catch (err) {
+    console.warn('Direct question agent call fallback:', err);
+    return `Hello ${userProfile.displayName || userProfile.name}, with your background in ${userProfile.fieldOfStudy}${userProfile.university ? ` at ${userProfile.university}` : ''} and proficiency in ${userProfile.skills.slice(0, 2).join(' and ')}, you are well-positioned. When addressing reviewers, explicitly link your projects on ${userProfile.linkedin ? 'LinkedIn' : 'your portfolio'} to demonstrate demonstrated track record and leadership.`;
+  }
+}
+

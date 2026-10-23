@@ -142,7 +142,7 @@ export interface UserProfile {
     includeAfricanOnly: boolean;
   };
 
-  // Compatibility aliases
+  // Compatibility aliases & Professional Metadata
   name?: string;
   stage?: string;
   nationality?: string;
@@ -152,6 +152,12 @@ export interface UserProfile {
   emailAlertsEnabled?: boolean;
   website?: string;
   githubOrPortfolio?: string;
+  linkedin?: string;
+  github?: string;
+  portfolioUrl?: string;
+  university?: string;
+  statementOfAmbition?: string;
+  achievements?: string[];
 }
 
 export interface SavedOpportunityItem {

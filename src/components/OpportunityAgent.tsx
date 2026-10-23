@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Opportunity, UserProfile, ApplicationTrackerItem, AgentActionPlan, AgentThoughtStep } from '../types';
-import { runOpportunityAgent, generateDossierFile, AgentExecutionResult } from '../services/agentService';
+import { runOpportunityAgent, generateDossierFile, answerAgentDirectQuestion, AgentExecutionResult } from '../services/agentService';
 import { calculateDeadlineInfo, downloadCalendarEvent } from '../utils/dateUtils';
 import {
   Bot,
@@ -28,7 +28,12 @@ import {
   Cpu,
   Zap,
   CheckSquare,
-  Square
+  Square,
+  Linkedin,
+  GraduationCap,
+  MessageSquare,
+  HelpCircle,
+  Globe
 } from 'lucide-react';
 
 interface OpportunityAgentProps {
@@ -76,6 +81,27 @@ export const OpportunityAgent: React.FC<OpportunityAgentProps> = ({
   const [isEditingStatement, setIsEditingStatement] = useState(false);
   const [editedStatementText, setEditedStatementText] = useState('');
   const [localChecklist, setLocalChecklist] = useState<{ id: string; text: string; done: boolean }[]>([]);
+
+  // Direct conversational Q&A grounded in user's LinkedIn, University & Ambition
+  const [directQuestion, setDirectQuestion] = useState('');
+  const [directAnswer, setDirectAnswer] = useState<string | null>(null);
+  const [isAnsweringDirect, setIsAnsweringDirect] = useState(false);
+
+  const handleAskDirectQuestion = async (customQ?: string) => {
+    const q = (customQ || directQuestion).trim();
+    if (!q || isAnsweringDirect) return;
+    setIsAnsweringDirect(true);
+    setDirectAnswer(null);
+    try {
+      const answer = await answerAgentDirectQuestion(q, userProfile, opportunities);
+      setDirectAnswer(answer);
+    } catch (e) {
+      console.error(e);
+      setDirectAnswer('Unable to generate tailored answer at this moment.');
+    } finally {
+      setIsAnsweringDirect(false);
+    }
+  };
 
   // If initialPrompt changes, populate input and auto-run
   useEffect(() => {
@@ -194,17 +220,51 @@ export const OpportunityAgent: React.FC<OpportunityAgentProps> = ({
           </p>
         </div>
 
-        {/* Active Context Card */}
-        <div className="flex items-center gap-3 self-start md:self-auto text-xs bg-white dark:bg-[#0c0c0e] px-3.5 py-2.5 rounded-xl border border-neutral-200 dark:border-white/[0.08] shadow-xs">
-          <div className="h-7 w-7 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-mono text-[11px] font-bold">
-            <Cpu className="h-4 w-4" />
-          </div>
-          <div>
-            <div className="font-semibold text-neutral-900 dark:text-white">
-              {userProfile.displayName || userProfile.name || userProfile.username}
+        {/* Active Candidate Profile Intelligence Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 self-start md:self-auto text-xs bg-white dark:bg-[#0c0c0e] p-3 rounded-xl border border-neutral-200 dark:border-white/[0.08] shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <div className="h-9 w-9 rounded-full overflow-hidden bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 shrink-0 border border-indigo-200 dark:border-indigo-800">
+              <img
+                src={userProfile.avatar}
+                alt={userProfile.displayName}
+                className="h-full w-full object-cover"
+              />
             </div>
-            <div className="text-[11px] text-neutral-400 font-mono capitalize">
-              {userProfile.persona} · {userProfile.country}
+            <div>
+              <div className="font-bold text-neutral-900 dark:text-white flex items-center gap-1.5">
+                <span>{userProfile.displayName || userProfile.name}</span>
+                {userProfile.linkedin && (
+                  <a
+                    href={userProfile.linkedin}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-indigo-500 hover:text-indigo-600 dark:text-indigo-400"
+                    title="Verified LinkedIn Profile"
+                  >
+                    <Linkedin className="h-3 w-3" />
+                  </a>
+                )}
+              </div>
+              <div className="text-[11px] text-neutral-500 dark:text-neutral-400 font-mono flex items-center gap-1.5 flex-wrap">
+                {userProfile.university && (
+                  <span className="flex items-center gap-1">
+                    <GraduationCap className="h-3 w-3 text-neutral-400" />
+                    <span className="truncate max-w-[120px]">{userProfile.university}</span>
+                    <span>·</span>
+                  </span>
+                )}
+                <span>{userProfile.country}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="sm:border-l sm:border-neutral-200 dark:sm:border-white/[0.08] sm:pl-3 pt-2 sm:pt-0">
+            <div className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Grounded in Profile</span>
+            </div>
+            <div className="text-[10px] text-neutral-400 line-clamp-1 max-w-[160px]" title={userProfile.statementOfAmbition || userProfile.careerGoals}>
+              {userProfile.statementOfAmbition || userProfile.careerGoals || 'Ready for matching'}
             </div>
           </div>
         </div>
@@ -319,6 +379,97 @@ export const OpportunityAgent: React.FC<OpportunityAgentProps> = ({
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Interactive Direct Q&A with Agent grounded in candidate's credentials */}
+      <div className="mb-8 rounded-2xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#0c0c0e] p-5 shadow-xs">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-6 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xs">
+              <MessageSquare className="h-3.5 w-3.5" />
+            </div>
+            <h3 className="text-xs sm:text-sm font-bold text-neutral-900 dark:text-white">
+              Ask Agent Any Question About Your Profile & Opportunities
+            </h3>
+          </div>
+          <span className="text-[10px] font-mono text-neutral-400 hidden sm:inline">
+            Powered by your LinkedIn, University & Ambition
+          </span>
+        </div>
+
+        <div className="flex gap-2 mb-3">
+          <input
+            type="text"
+            value={directQuestion}
+            onChange={(e) => setDirectQuestion(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleAskDirectQuestion();
+              }
+            }}
+            placeholder={`e.g. "Am I eligible for Rhodes with my background from ${userProfile.university || 'university'}?" or "How should I describe my projects on LinkedIn?"`}
+            className="flex-1 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/90 py-2.5 px-3.5 text-xs text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:border-indigo-500 focus:outline-none transition-all"
+          />
+          <button
+            type="button"
+            onClick={() => handleAskDirectQuestion()}
+            disabled={!directQuestion.trim() || isAnsweringDirect}
+            className="px-4 py-2.5 rounded-xl bg-neutral-950 text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 text-xs font-semibold transition-all shadow-xs flex items-center gap-1.5 disabled:opacity-50"
+          >
+            {isAnsweringDirect ? (
+              <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            ) : (
+              <>
+                <Send className="h-3 w-3" />
+                <span>Ask Agent</span>
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Quick Suggested Questions */}
+        <div className="flex flex-wrap items-center gap-1.5 text-[11px] mb-1">
+          <span className="text-neutral-400 font-mono text-[10px]">Quick Ask:</span>
+          {[
+            `Check my eligibility for European & African scholarships with my ${userProfile.fieldOfStudy} background`,
+            `How should I position my LinkedIn profile for competitive hackathons?`,
+            `What are the highest-probability grants for my ambition in ${userProfile.country}?`
+          ].map((prompt, qIdx) => (
+            <button
+              key={qIdx}
+              type="button"
+              onClick={() => {
+                setDirectQuestion(prompt);
+                handleAskDirectQuestion(prompt);
+              }}
+              className="text-left px-2.5 py-1 rounded-lg bg-neutral-50 dark:bg-neutral-900/60 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-neutral-200/60 dark:border-white/[0.06] text-neutral-600 dark:text-neutral-300 transition-colors truncate max-w-xs sm:max-w-md"
+            >
+              💬 {prompt}
+            </button>
+          ))}
+        </div>
+
+        {/* Answer Display */}
+        {directAnswer && (
+          <div className="mt-4 p-4 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200/60 dark:border-indigo-900/40 text-xs leading-relaxed animate-in fade-in">
+            <div className="flex items-center justify-between font-mono text-[11px] text-indigo-600 dark:text-indigo-400 font-semibold mb-2">
+              <span className="flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>Agent Tailored Answer</span>
+              </span>
+              <button
+                onClick={() => setDirectAnswer(null)}
+                className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 text-[11px]"
+              >
+                Dismiss
+              </button>
+            </div>
+            <div className="text-neutral-800 dark:text-neutral-200 whitespace-pre-wrap">
+              {directAnswer}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Execution Progress & Live Thought Chain (Terminal Style) */}

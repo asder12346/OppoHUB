@@ -462,6 +462,9 @@ function OpportunityRadarApp() {
         onClose={() => setIsAuthModalOpen(false)}
         onSuccess={(profile) => {
           handleSaveProfile(profile);
+          if (profile.statementOfAmbition || profile.linkedin || profile.university) {
+            setCurrentTab('agent');
+          }
         }}
         onLaunchFullOnboarding={() => {
           handleOpenOnboardingWithCategory();
