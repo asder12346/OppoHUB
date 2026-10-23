@@ -74,6 +74,7 @@ function OpportunityRadarApp() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'signup'>('login');
   const [isContactModalOpen, setIsContactModalOpen] = useState<boolean>(false);
+  const [agentInitialPrompt, setAgentInitialPrompt] = useState<string>('');
 
   // Save profile & tracker changes to storage
   useEffect(() => {
@@ -322,7 +323,10 @@ function OpportunityRadarApp() {
             onNavigateToFeed={() => setCurrentTab('feed')}
             onNavigateToTracker={() => setCurrentTab('tracker')}
             onNavigateToCommunity={() => setCurrentTab('community')}
-            onNavigateToAgent={() => setCurrentTab('agent')}
+            onNavigateToAgent={(prompt) => {
+              if (prompt) setAgentInitialPrompt(prompt);
+              setCurrentTab('agent');
+            }}
             onOpenOpportunityDetail={(opp) => setSelectedOpportunity(opp)}
             onToggleSaveOpportunity={handleToggleSave}
             savedOpportunityIds={trackerItems.map((t) => t.opportunityId)}
@@ -415,6 +419,7 @@ function OpportunityRadarApp() {
             userProfile={userProfile}
             opportunities={opportunities}
             trackerItems={trackerItems}
+            initialPrompt={agentInitialPrompt}
             onAddMatchesToTracker={handleAddMatchesToTracker}
             onOpenOpportunityDetail={(opp) => setSelectedOpportunity(opp)}
           />

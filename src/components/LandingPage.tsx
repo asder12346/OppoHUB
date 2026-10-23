@@ -33,7 +33,7 @@ interface LandingPageProps {
   onNavigateToFeed: () => void;
   onNavigateToTracker: () => void;
   onNavigateToCommunity: () => void;
-  onNavigateToAgent: () => void;
+  onNavigateToAgent: (prompt?: string) => void;
   onOpenOpportunityDetail: (opp: Opportunity) => void;
   onToggleSaveOpportunity: (oppId: string) => void;
   savedOpportunityIds: string[];
@@ -118,7 +118,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             {/* Primary Actions (Cursor-Style High Contrast) */}
             <div className="flex flex-wrap items-center justify-center gap-3 mb-12">
               <button
-                onClick={onNavigateToAgent}
+                onClick={() => onNavigateToAgent()}
                 className="inline-flex items-center gap-2 rounded-full bg-neutral-950 text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-950 dark:hover:bg-neutral-200 px-6 py-3 text-sm font-semibold shadow-sm transition-all"
               >
                 <Bot className="h-4 w-4 text-indigo-400 dark:text-indigo-600" />
@@ -209,7 +209,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   <span>"{interactiveAgentExamples[activeInteractivePrompt].prompt}"</span>
                 </div>
                 <button
-                  onClick={onNavigateToAgent}
+                  onClick={() => onNavigateToAgent(interactiveAgentExamples[activeInteractivePrompt].prompt)}
                   className="shrink-0 text-xs text-indigo-600 dark:text-indigo-400 font-bold hover:underline inline-flex items-center gap-1"
                 >
                   <span>Execute in Agent</span>
@@ -489,7 +489,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
           <div className="flex flex-wrap items-center justify-center gap-3">
             <button
-              onClick={onNavigateToAgent}
+              onClick={() => onNavigateToAgent()}
               className="inline-flex items-center gap-2 rounded-full bg-neutral-950 text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-950 dark:hover:bg-neutral-200 px-6 py-3 text-sm font-semibold shadow-xs transition-all"
             >
               <Sparkles className="h-4 w-4 text-indigo-400 dark:text-indigo-600" />

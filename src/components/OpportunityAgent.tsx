@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Opportunity, UserProfile, ApplicationTrackerItem, AgentActionPlan, AgentThoughtStep } from '../types';
-import { runOpportunityAgent } from '../services/agentService';
+import { runOpportunityAgent, generateDossierFile, AgentExecutionResult } from '../services/agentService';
 import { calculateDeadlineInfo, downloadCalendarEvent } from '../utils/dateUtils';
 import {
   Bot,
@@ -22,29 +22,36 @@ import {
   FileText,
   ListTodo,
   Layers,
-  ArrowUpRight
+  ArrowUpRight,
+  Download,
+  Edit3,
+  Cpu,
+  Zap,
+  CheckSquare,
+  Square
 } from 'lucide-react';
 
 interface OpportunityAgentProps {
   userProfile: UserProfile;
   opportunities: Opportunity[];
   trackerItems: ApplicationTrackerItem[];
+  initialPrompt?: string;
   onAddMatchesToTracker: (matchedOpps: Opportunity[], customChecklist: { id: string; text: string; done: boolean }[]) => void;
   onOpenOpportunityDetail: (opp: Opportunity) => void;
 }
 
-const PRESET_PROMPTS = [
+const PRESET_DIRECTIVES = [
   {
-    title: 'Fully-funded scholarships with prep checklist',
-    prompt: 'Find fully-funded scholarships closing in the next 60 days that match my education level, audit my eligibility, and generate my complete preparation checklist.'
+    title: 'Fully-funded STEM scholarships',
+    prompt: 'Find fully-funded STEM scholarships in Europe or Africa closing in the next 60 days, verify eligibility for my degree, and draft my application statement.'
   },
   {
     title: 'Seed grants & founder pitch draft',
-    prompt: 'Identify equity-free seed grants and startup competitions for African founders, audit requirements, and draft my initial statement of purpose.'
+    prompt: 'Identify equity-free seed grants and startup competitions for African founders, audit requirements, and draft my initial statement of ambition.'
   },
   {
-    title: 'Hackathons with high win-probability',
-    prompt: 'Scan for active tech & Web3 hackathons matching my technical skills, check prize pools, and create an execution plan for my team.'
+    title: 'High-prize Web3 hackathons',
+    prompt: 'Scan for active tech & Web3 hackathons matching my technical skills, check prize pools, and create an execution roadmap for my team.'
   },
   {
     title: 'Full eligibility audit & blocker scan',
@@ -56,15 +63,27 @@ export const OpportunityAgent: React.FC<OpportunityAgentProps> = ({
   userProfile,
   opportunities,
   trackerItems,
+  initialPrompt = '',
   onAddMatchesToTracker,
   onOpenOpportunityDetail
 }) => {
-  const [promptInput, setPromptInput] = useState('');
+  const [promptInput, setPromptInput] = useState(initialPrompt || '');
   const [isRunning, setIsRunning] = useState(false);
-  const [actionPlan, setActionPlan] = useState<AgentActionPlan | null>(null);
+  const [actionPlan, setActionPlan] = useState<AgentExecutionResult | null>(null);
   const [liveSteps, setLiveSteps] = useState<AgentThoughtStep[]>([]);
   const [copiedDocument, setCopiedDocument] = useState(false);
   const [trackerQueued, setTrackerQueued] = useState(false);
+  const [isEditingStatement, setIsEditingStatement] = useState(false);
+  const [editedStatementText, setEditedStatementText] = useState('');
+  const [localChecklist, setLocalChecklist] = useState<{ id: string; text: string; done: boolean }[]>([]);
+
+  // If initialPrompt changes, populate input and auto-run
+  useEffect(() => {
+    if (initialPrompt && initialPrompt.trim()) {
+      setPromptInput(initialPrompt);
+      handleRunAgent(initialPrompt);
+    }
+  }, [initialPrompt]);
 
   const handleRunAgent = async (overridePrompt?: string) => {
     const query = (overridePrompt || promptInput).trim();
@@ -73,6 +92,7 @@ export const OpportunityAgent: React.FC<OpportunityAgentProps> = ({
     setIsRunning(true);
     setTrackerQueued(false);
     setCopiedDocument(false);
+    setIsEditingStatement(false);
     setActionPlan(null);
 
     const initialSteps: AgentThoughtStep[] = [
@@ -98,6 +118,10 @@ export const OpportunityAgent: React.FC<OpportunityAgentProps> = ({
         }
       );
       setActionPlan(plan);
+      setLocalChecklist(plan.suggestedChecklist || []);
+      if (plan.draftDocument?.content) {
+        setEditedStatementText(plan.draftDocument.content);
+      }
     } catch (err) {
       console.error('Agent execution error:', err);
     } finally {
@@ -111,51 +135,85 @@ export const OpportunityAgent: React.FC<OpportunityAgentProps> = ({
 
   const handleQueueToTracker = () => {
     if (!actionPlan || matchedOpps.length === 0) return;
-    onAddMatchesToTracker(matchedOpps, actionPlan.suggestedChecklist);
+    onAddMatchesToTracker(matchedOpps, localChecklist);
     setTrackerQueued(true);
   };
 
+  const handleToggleCheckItem = (id: string) => {
+    setLocalChecklist((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, done: !item.done } : item))
+    );
+  };
+
   const handleCopyDocument = () => {
-    if (actionPlan?.draftDocument?.content) {
-      navigator.clipboard.writeText(actionPlan.draftDocument.content);
+    const textToCopy = isEditingStatement ? editedStatementText : (actionPlan?.draftDocument?.content || '');
+    if (textToCopy) {
+      navigator.clipboard.writeText(textToCopy);
       setCopiedDocument(true);
-      setTimeout(() => setCopiedDocument(false), 2500);
+      setTimeout(() => setCopiedDocument(false), 2200);
     }
   };
 
+  const handleDownloadDossier = () => {
+    if (!actionPlan) return;
+    const currentPlan: AgentActionPlan = {
+      ...actionPlan,
+      suggestedChecklist: localChecklist,
+      draftDocument: actionPlan.draftDocument
+        ? { ...actionPlan.draftDocument, content: editedStatementText || actionPlan.draftDocument.content }
+        : undefined
+    };
+    generateDossierFile(currentPlan, opportunities, userProfile);
+  };
+
+  const handleAddConstraint = (phrase: string) => {
+    if (promptInput.includes(phrase)) return;
+    const updated = promptInput ? `${promptInput.trim()}, ${phrase}` : phrase;
+    setPromptInput(updated);
+  };
+
+  const completedChecklistCount = localChecklist.filter((c) => c.done).length;
+
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 transition-colors">
+      
       {/* Header bar */}
-      <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-black/[0.06] dark:border-white/[0.08] pb-6">
+      <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-black/[0.08] dark:border-white/[0.08] pb-6">
         <div>
-          <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-xs font-mono font-medium bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60 mb-2">
+          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-[11px] font-mono font-medium bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60 mb-2.5">
             <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
-            <span>Autonomous Copilot v2.4</span>
+            <span>Autonomous Intelligence Copilot v2.4</span>
+            <span className="text-neutral-400">·</span>
+            <span>Real-Time Reasoning</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-900 dark:text-white">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-950 dark:text-white">
             Opportunity Agent
           </h1>
-          <p className="mt-1 text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 max-w-2xl">
-            Give natural language instructions. The agent scans verified programs, audits your eligibility, drafts personal statements, and queues applications directly to your tracker.
+          <p className="mt-1 text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 max-w-2xl leading-relaxed">
+            Give conversational instructions. The agent parses eligibility thresholds, scans verified programs, drafts tailored application statements, and queues milestones into your pipeline.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-start md:self-auto text-xs bg-neutral-100 dark:bg-neutral-900 px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-800">
-          <span className="text-neutral-400">Context:</span>
-          <span className="font-semibold text-neutral-800 dark:text-neutral-200">
-            {userProfile.displayName || userProfile.name || userProfile.username}
-          </span>
-          <span className="text-neutral-400">·</span>
-          <span className="capitalize font-mono text-indigo-600 dark:text-indigo-400">
-            {userProfile.persona} ({userProfile.country})
-          </span>
+        {/* Active Context Card */}
+        <div className="flex items-center gap-3 self-start md:self-auto text-xs bg-white dark:bg-[#0c0c0e] px-3.5 py-2.5 rounded-xl border border-neutral-200 dark:border-white/[0.08] shadow-xs">
+          <div className="h-7 w-7 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-mono text-[11px] font-bold">
+            <Cpu className="h-4 w-4" />
+          </div>
+          <div>
+            <div className="font-semibold text-neutral-900 dark:text-white">
+              {userProfile.displayName || userProfile.name || userProfile.username}
+            </div>
+            <div className="text-[11px] text-neutral-400 font-mono capitalize">
+              {userProfile.persona} · {userProfile.country}
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Agent Command Input (Cursor-style command bar) */}
-      <div className="relative rounded-2xl border border-neutral-300 dark:border-neutral-700/80 bg-white dark:bg-[#111113] p-2 shadow-sm transition-all focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 mb-6">
+      <div className="relative rounded-2xl border border-neutral-300 dark:border-white/[0.12] bg-white dark:bg-[#0c0c0e] p-2 shadow-sm transition-all focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 mb-6">
         <div className="flex items-start gap-3 p-2">
-          <div className="h-8 w-8 rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-black flex items-center justify-center shrink-0 mt-0.5">
+          <div className="h-8 w-8 rounded-lg bg-neutral-950 text-white dark:bg-white dark:text-black flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
             <Bot className="h-4 w-4" />
           </div>
           <div className="flex-1">
@@ -170,16 +228,37 @@ export const OpportunityAgent: React.FC<OpportunityAgentProps> = ({
                 }
               }}
               placeholder="Tell the agent what to find or execute: e.g. 'Find fully-funded scholarships in Europe or Canada, audit my CGPA, and draft my application statement...'"
-              className="w-full resize-none bg-transparent text-sm text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 outline-none leading-relaxed"
+              className="w-full resize-none bg-transparent text-xs sm:text-sm text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 outline-none leading-relaxed"
             />
             
-            <div className="flex items-center justify-between pt-2 border-t border-neutral-100 dark:border-neutral-800/80 text-xs">
+            {/* Quick Directive Modifier Chips */}
+            <div className="flex flex-wrap items-center gap-1.5 pt-2 pb-1 text-[11px]">
+              <span className="text-neutral-400 font-mono text-[10px]">Add constraint:</span>
+              {[
+                'Fully-funded only',
+                'Closing within 30 days',
+                'Africa & Diaspora focused',
+                'Include project pitch outline',
+                'No application fee'
+              ].map((chip) => (
+                <button
+                  key={chip}
+                  type="button"
+                  onClick={() => handleAddConstraint(chip)}
+                  className="px-2 py-0.5 rounded-full bg-neutral-100 hover:bg-neutral-200 dark:bg-white/[0.05] dark:hover:bg-white/[0.1] text-neutral-600 dark:text-neutral-300 border border-neutral-200/60 dark:border-white/[0.06] transition-colors"
+                >
+                  + {chip}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-neutral-100 dark:border-white/[0.06] text-xs">
               <span className="text-[11px] text-neutral-400 flex items-center gap-1">
                 <span>Press</span>
-                <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 font-mono text-[10px]">
+                <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-white/[0.08] border border-neutral-200 dark:border-white/[0.08] font-mono text-[10px]">
                   Enter ↵
                 </kbd>
-                <span>to execute</span>
+                <span>to execute autonomous plan</span>
               </span>
 
               <div className="flex items-center gap-2">
@@ -194,12 +273,12 @@ export const OpportunityAgent: React.FC<OpportunityAgentProps> = ({
                 <button
                   onClick={() => handleRunAgent()}
                   disabled={!promptInput.trim() || isRunning}
-                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl font-semibold text-xs transition-all bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed shadow-xs"
+                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl font-semibold text-xs transition-all bg-neutral-950 text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed shadow-xs"
                 >
                   {isRunning ? (
                     <>
                       <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                      <span>Executing...</span>
+                      <span>Reasoning...</span>
                     </>
                   ) : (
                     <>
@@ -214,13 +293,13 @@ export const OpportunityAgent: React.FC<OpportunityAgentProps> = ({
         </div>
       </div>
 
-      {/* Quick Prompts Carousel */}
+      {/* Suggested Directives Row */}
       <div className="mb-8">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400 block mb-2.5">
-          Suggested Autonomous Directives
+        <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-neutral-400 block mb-2.5">
+          Preset Autonomous Directives
         </span>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {PRESET_PROMPTS.map((preset, idx) => (
+          {PRESET_DIRECTIVES.map((preset, idx) => (
             <button
               key={idx}
               onClick={() => {
@@ -228,9 +307,9 @@ export const OpportunityAgent: React.FC<OpportunityAgentProps> = ({
                 handleRunAgent(preset.prompt);
               }}
               disabled={isRunning}
-              className="text-left rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/70 hover:bg-white dark:bg-neutral-900/50 dark:hover:bg-neutral-900 p-3 transition-all hover:border-neutral-300 dark:hover:border-neutral-700 group"
+              className="text-left rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#0c0c0e] hover:bg-neutral-50 dark:hover:bg-[#111113] p-3 transition-all hover:border-neutral-300 dark:hover:border-white/[0.16] group"
             >
-              <div className="flex items-center justify-between text-xs font-semibold text-neutral-800 dark:text-neutral-200 mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+              <div className="flex items-center justify-between text-xs font-semibold text-neutral-900 dark:text-white mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
                 <span>{preset.title}</span>
                 <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
@@ -242,26 +321,32 @@ export const OpportunityAgent: React.FC<OpportunityAgentProps> = ({
         </div>
       </div>
 
-      {/* Execution Progress & Live Thought Chain */}
+      {/* Execution Progress & Live Thought Chain (Terminal Style) */}
       {isRunning && (
-        <div className="rounded-2xl border border-indigo-200/80 dark:border-indigo-900/50 bg-indigo-50/40 dark:bg-indigo-950/20 p-6 mb-8 animate-fade-in">
-          <div className="flex items-center justify-between mb-4">
+        <div className="rounded-2xl border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/40 dark:bg-[#0c0c0e] p-6 mb-8 animate-fade-in shadow-xs">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-indigo-100 dark:border-white/[0.06]">
             <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded-full bg-indigo-600 animate-ping" />
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-600" />
+              </span>
               <span className="font-bold text-xs uppercase tracking-wider text-indigo-700 dark:text-indigo-300 font-mono">
-                Autonomous Reasoning Engine Active
+                Autonomous Reasoning Engine
               </span>
             </div>
-            <span className="text-xs font-mono text-neutral-500">Evaluating Knowledge Graph...</span>
+            <span className="text-xs font-mono text-neutral-500 dark:text-neutral-400 flex items-center gap-1.5">
+              <Terminal className="h-3.5 w-3.5 text-indigo-500" />
+              <span>Scanning live opportunities...</span>
+            </span>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-3 font-mono">
             {liveSteps.map((step, idx) => (
               <div key={idx} className="flex items-start gap-3 text-xs">
                 {step.status === 'done' ? (
                   <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
                 ) : step.status === 'in_progress' ? (
-                  <div className="h-4 w-4 rounded-full border-2 border-indigo-600 border-t-transparent animate-spin mt-0.5 shrink-0" />
+                  <div className="h-4 w-4 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin mt-0.5 shrink-0" />
                 ) : (
                   <div className="h-4 w-4 rounded-full border border-neutral-300 dark:border-neutral-700 mt-0.5 shrink-0" />
                 )}
@@ -270,7 +355,7 @@ export const OpportunityAgent: React.FC<OpportunityAgentProps> = ({
                     {step.step}
                   </span>
                   {step.detail && (
-                    <p className="text-[11px] text-neutral-500 dark:text-neutral-400 font-mono mt-0.5">
+                    <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
                       ↳ {step.detail}
                     </p>
                   )}
@@ -284,45 +369,73 @@ export const OpportunityAgent: React.FC<OpportunityAgentProps> = ({
       {/* Results Deck */}
       {actionPlan && !isRunning && (
         <div className="space-y-6 animate-fade-in">
-          {/* Executive Briefing Banner */}
-          <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#111113] p-6 shadow-xs">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
+          
+          {/* Executive Briefing Banner & HUD */}
+          <div className="rounded-2xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#0c0c0e] p-6 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-black/[0.06] dark:border-white/[0.06]">
+              <div className="flex items-center gap-2.5">
                 <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 font-mono text-xs font-bold">
                   ✓
                 </span>
-                <span className="font-bold text-sm text-neutral-900 dark:text-white">
-                  Agent Briefing & Strategy Report
+                <span className="font-bold text-sm text-neutral-950 dark:text-white">
+                  Strategy Briefing & Execution Plan
                 </span>
               </div>
-              <span className="font-mono text-[11px] text-neutral-400">
-                {new Date(actionPlan.createdAt).toLocaleTimeString()}
-              </span>
+              
+              {/* Telemetry HUD chips */}
+              <div className="flex items-center gap-2 text-[11px] font-mono text-neutral-500 dark:text-neutral-400 flex-wrap">
+                {actionPlan.telemetry && (
+                  <>
+                    <span className="px-2 py-0.5 rounded bg-black/[0.04] dark:bg-white/[0.05]">
+                      {actionPlan.telemetry.durationMs}ms
+                    </span>
+                    <span>·</span>
+                    <span className="px-2 py-0.5 rounded bg-black/[0.04] dark:bg-white/[0.05]">
+                      {actionPlan.telemetry.recordsScanned} scanned
+                    </span>
+                    <span>·</span>
+                    <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold">
+                      {actionPlan.telemetry.confidenceScore}% Confidence
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
 
-            <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed mb-4">
+            <p className="text-xs sm:text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed mb-5">
               {actionPlan.summary}
             </p>
 
-            {/* Quick action bar */}
-            <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-neutral-100 dark:border-neutral-800">
-              <button
-                onClick={handleQueueToTracker}
-                disabled={trackerQueued || matchedOpps.length === 0}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 transition-all shadow-xs disabled:opacity-60"
-              >
-                {trackerQueued ? (
-                  <>
-                    <Check className="h-3.5 w-3.5 text-emerald-500" />
-                    <span>Queued in Tracker</span>
-                  </>
-                ) : (
-                  <>
-                    <Bookmark className="h-3.5 w-3.5" />
-                    <span>Queue {matchedOpps.length} Matches into Application Tracker</span>
-                  </>
-                )}
-              </button>
+            {/* Quick Actions Row */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-neutral-100 dark:border-white/[0.06]">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <button
+                  onClick={handleQueueToTracker}
+                  disabled={trackerQueued || matchedOpps.length === 0}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-neutral-950 text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 transition-all shadow-xs disabled:opacity-60"
+                >
+                  {trackerQueued ? (
+                    <>
+                      <Check className="h-3.5 w-3.5 text-emerald-500" />
+                      <span>Queued in Tracker ({matchedOpps.length})</span>
+                    </>
+                  ) : (
+                    <>
+                      <Bookmark className="h-3.5 w-3.5" />
+                      <span>Queue {matchedOpps.length} Matches into Application Tracker</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={handleDownloadDossier}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-medium border border-neutral-200 dark:border-white/[0.08] hover:bg-neutral-50 dark:hover:bg-white/[0.05] text-neutral-800 dark:text-neutral-200 transition-colors"
+                  title="Download complete Markdown dossier"
+                >
+                  <Download className="h-3.5 w-3.5 text-indigo-500" />
+                  <span>Download Full Dossier (.md)</span>
+                </button>
+              </div>
 
               <div className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center gap-1.5">
                 <ShieldCheck className="h-4 w-4 text-emerald-500" />
@@ -334,10 +447,10 @@ export const OpportunityAgent: React.FC<OpportunityAgentProps> = ({
           {/* Matched Opportunities Grid */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-neutral-400">
-                Identified Best-Fit Programs ({matchedOpps.length})
+              <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-neutral-400">
+                Top Identified Programs ({matchedOpps.length})
               </h2>
-              <span className="text-xs text-neutral-500">Sorted by Agent match coefficient</span>
+              <span className="text-xs text-neutral-400">Ranked by background fit & deadlines</span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -346,11 +459,11 @@ export const OpportunityAgent: React.FC<OpportunityAgentProps> = ({
                 return (
                   <div
                     key={opp.id}
-                    className="flex flex-col justify-between rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#141416] p-4 hover:border-neutral-300 dark:hover:border-neutral-700 transition-all group"
+                    className="flex flex-col justify-between rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#0c0c0e] p-4 hover:border-neutral-300 dark:hover:border-white/[0.16] transition-all group shadow-xs"
                   >
                     <div>
                       <div className="flex items-center justify-between text-[11px] text-neutral-400 mb-2">
-                        <span className="font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                        <span className="font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 font-mono">
                           {opp.category}
                         </span>
                         <span className={`font-mono ${dl.isCritical ? 'text-rose-500' : dl.isUrgent ? 'text-amber-500' : 'text-neutral-400'}`}>
@@ -374,7 +487,7 @@ export const OpportunityAgent: React.FC<OpportunityAgentProps> = ({
                       </p>
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-neutral-100 dark:border-neutral-800/80 flex items-center justify-between">
+                    <div className="mt-4 pt-3 border-t border-neutral-100 dark:border-white/[0.06] flex items-center justify-between">
                       <span className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold">
                         {opp.fundingDetails || opp.fundingAmount || 'Funded'}
                       </span>
@@ -382,7 +495,7 @@ export const OpportunityAgent: React.FC<OpportunityAgentProps> = ({
                         onClick={() => onOpenOpportunityDetail(opp)}
                         className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:text-indigo-600 dark:hover:text-indigo-400 inline-flex items-center gap-1"
                       >
-                        <span>Audit</span>
+                        <span>Audit Specs</span>
                         <ArrowUpRight className="h-3 w-3" />
                       </button>
                     </div>
@@ -392,12 +505,12 @@ export const OpportunityAgent: React.FC<OpportunityAgentProps> = ({
             </div>
           </div>
 
-          {/* Dual Panel: Draft Document + Action Checklist */}
+          {/* Dual Panel: Draft Document (Editable) + Interactive Action Checklist */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
-            {/* Left: Generated Application Statement */}
+            {/* Left: Application Statement / Proposal Draft with live editor */}
             {actionPlan.draftDocument && (
-              <div className="lg:col-span-7 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#111113] p-6 shadow-xs flex flex-col justify-between">
+              <div className="lg:col-span-7 rounded-2xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#0c0c0e] p-6 shadow-xs flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
@@ -406,27 +519,45 @@ export const OpportunityAgent: React.FC<OpportunityAgentProps> = ({
                         {actionPlan.draftDocument.title}
                       </span>
                     </div>
-                    <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-500">
-                      {actionPlan.draftDocument.type}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setIsEditingStatement(!isEditingStatement)}
+                        className="text-[11px] font-medium text-neutral-500 hover:text-neutral-900 dark:hover:text-white inline-flex items-center gap-1 px-2 py-0.5 rounded bg-neutral-100 dark:bg-white/[0.05]"
+                      >
+                        <Edit3 className="h-3 w-3" />
+                        <span>{isEditingStatement ? 'Preview' : 'Edit Text'}</span>
+                      </button>
+                      <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-neutral-100 dark:bg-white/[0.05] text-neutral-500">
+                        {actionPlan.draftDocument.type}
+                      </span>
+                    </div>
                   </div>
 
                   <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-3">
                     Auto-synthesized draft tailored to your background, skills, and target program objectives.
                   </p>
 
-                  <div className="rounded-xl bg-neutral-50 dark:bg-neutral-900 p-4 border border-neutral-200/80 dark:border-neutral-800 font-serif text-xs leading-relaxed text-neutral-800 dark:text-neutral-200 whitespace-pre-wrap">
-                    {actionPlan.draftDocument.content}
-                  </div>
+                  {isEditingStatement ? (
+                    <textarea
+                      rows={8}
+                      value={editedStatementText}
+                      onChange={(e) => setEditedStatementText(e.target.value)}
+                      className="w-full rounded-xl bg-neutral-50 dark:bg-[#111113] p-4 border border-indigo-500 text-xs text-neutral-900 dark:text-neutral-100 font-sans leading-relaxed outline-none"
+                    />
+                  ) : (
+                    <div className="rounded-xl bg-neutral-50 dark:bg-[#111113] p-4 border border-neutral-200/80 dark:border-white/[0.06] text-xs leading-relaxed text-neutral-800 dark:text-neutral-200 whitespace-pre-wrap">
+                      {editedStatementText || actionPlan.draftDocument.content}
+                    </div>
+                  )}
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between">
+                <div className="mt-4 pt-3 border-t border-neutral-100 dark:border-white/[0.06] flex items-center justify-between">
                   <span className="text-[11px] text-neutral-400">
-                    Ready to paste into host application portal
+                    {(editedStatementText || actionPlan.draftDocument.content).split(/\s+/).filter(Boolean).length} words · Ready for submission portal
                   </span>
                   <button
                     onClick={handleCopyDocument}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-200 transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-neutral-100 dark:bg-white/[0.08] hover:bg-neutral-200 dark:hover:bg-white/[0.14] text-neutral-800 dark:text-neutral-200 transition-colors"
                   >
                     {copiedDocument ? (
                       <>
@@ -444,8 +575,8 @@ export const OpportunityAgent: React.FC<OpportunityAgentProps> = ({
               </div>
             )}
 
-            {/* Right: Tailored Preparation Checklist */}
-            <div className="lg:col-span-5 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#111113] p-6 shadow-xs flex flex-col justify-between">
+            {/* Right: Interactive Action Checklist */}
+            <div className="lg:col-span-5 rounded-2xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#0c0c0e] p-6 shadow-xs flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
@@ -455,39 +586,48 @@ export const OpportunityAgent: React.FC<OpportunityAgentProps> = ({
                     </span>
                   </div>
                   <span className="text-xs font-mono text-neutral-400">
-                    {actionPlan.suggestedChecklist.length} tasks
+                    {completedChecklistCount}/{localChecklist.length} completed
                   </span>
                 </div>
 
                 <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4">
-                  Autonomous priority schedule to ensure submission before earliest cutoff date.
+                  Check off prerequisite documents as you prepare them. Synchronized with your Application Tracker.
                 </p>
 
                 <div className="space-y-2.5">
-                  {actionPlan.suggestedChecklist.map((item, idx) => (
+                  {localChecklist.map((item, idx) => (
                     <div
                       key={item.id}
-                      className="flex items-start gap-2.5 p-2.5 rounded-xl border border-neutral-100 dark:border-neutral-800/80 bg-neutral-50/60 dark:bg-neutral-900/40 text-xs"
+                      onClick={() => handleToggleCheckItem(item.id)}
+                      className={`flex items-start gap-2.5 p-2.5 rounded-xl border transition-all cursor-pointer text-xs ${
+                        item.done
+                          ? 'border-emerald-500/40 bg-emerald-500/5 text-neutral-400 line-through'
+                          : 'border-neutral-200/80 dark:border-white/[0.06] bg-neutral-50/60 dark:bg-white/[0.03] text-neutral-800 dark:text-neutral-200 hover:border-neutral-300 dark:hover:border-white/[0.12]'
+                      }`}
                     >
-                      <span className="flex h-4 w-4 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 font-mono text-[10px] font-bold shrink-0 mt-0.5">
-                        {idx + 1}
-                      </span>
-                      <span className="text-neutral-700 dark:text-neutral-300 leading-snug">
-                        {item.text}
-                      </span>
+                      {item.done ? (
+                        <CheckSquare className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
+                      ) : (
+                        <Square className="h-4 w-4 text-neutral-400 mt-0.5 shrink-0" />
+                      )}
+                      <span className="leading-snug">{item.text}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-neutral-100 dark:border-neutral-800 text-[11px] text-neutral-400 flex items-center justify-between">
-                <span>Checklist auto-attached when queuing to tracker</span>
+              <div className="mt-4 pt-3 border-t border-neutral-100 dark:border-white/[0.06] text-[11px] text-neutral-400 flex items-center justify-between">
+                <span>Auto-queues to Application Tracker</span>
+                <span className="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">
+                  {Math.round((completedChecklistCount / Math.max(1, localChecklist.length)) * 100)}% Ready
+                </span>
               </div>
             </div>
 
           </div>
         </div>
       )}
+
     </div>
   );
 };
