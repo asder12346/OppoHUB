@@ -1,0 +1,6 @@
+{
+  "name": "OpportunityRadar",
+  "description": "AI-powered discovery, eligibility verification, and application tracker for scholarships, grants, hackathons, and global opportunities.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
