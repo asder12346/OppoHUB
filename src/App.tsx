@@ -422,6 +422,7 @@ function OpportunityRadarApp() {
             initialPrompt={agentInitialPrompt}
             onAddMatchesToTracker={handleAddMatchesToTracker}
             onOpenOpportunityDetail={(opp) => setSelectedOpportunity(opp)}
+            onOpenProfile={() => setIsProfileModalOpen(true)}
           />
         )}
 

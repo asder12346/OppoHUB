@@ -1,6 +1,7 @@
 import React from 'react';
 import { Search, Sparkles, ShieldCheck, ArrowRight, Compass, Bot } from 'lucide-react';
 import { UserProfile } from '../types';
+import { calculateProfileCompletion } from '../utils/profileUtils';
 
 interface HeroBannerProps {
   searchQuery: string;
@@ -18,6 +19,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
   onExploreTracker,
   onLaunchAgent
 }) => {
+  const completion = calculateProfileCompletion(userProfile);
   return (
     <section className="relative overflow-hidden border-b border-black/[0.08] dark:border-white/[0.08] bg-[#FAFAFA] dark:bg-[#09090b] text-neutral-900 dark:text-neutral-100 transition-colors">
       
@@ -107,6 +109,25 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
                   <span className="font-medium capitalize text-neutral-900 dark:text-white">
                     {userProfile.preferredFormat || 'Global'}
                   </span>
+                </div>
+
+                {/* Progress Bar indicating context depth */}
+                <div className="pt-2 border-t border-black/[0.04] dark:border-white/[0.04]">
+                  <div className="flex items-center justify-between text-[11px] mb-1">
+                    <span className="text-neutral-500 dark:text-neutral-400 font-mono text-[10px] flex items-center gap-1">
+                      <Sparkles className="h-2.5 w-2.5 text-indigo-500" />
+                      <span>Context Completeness</span>
+                    </span>
+                    <span className="font-mono text-[10px] font-bold text-indigo-600 dark:text-indigo-400">
+                      {completion.percentage}%
+                    </span>
+                  </div>
+                  <div className="w-full h-1.5 rounded-full bg-neutral-200 dark:bg-white/[0.08] overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-emerald-500 transition-all duration-500"
+                      style={{ width: `${Math.max(6, completion.percentage)}%` }}
+                    />
+                  </div>
                 </div>
               </div>
 

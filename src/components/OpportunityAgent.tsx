@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Opportunity, UserProfile, ApplicationTrackerItem, AgentActionPlan, AgentThoughtStep } from '../types';
 import { runOpportunityAgent, generateDossierFile, answerAgentDirectQuestion, AgentExecutionResult } from '../services/agentService';
 import { calculateDeadlineInfo, downloadCalendarEvent } from '../utils/dateUtils';
+import { calculateProfileCompletion } from '../utils/profileUtils';
 import {
   Bot,
   Sparkles,
@@ -33,7 +34,8 @@ import {
   GraduationCap,
   MessageSquare,
   HelpCircle,
-  Globe
+  Globe,
+  TrendingUp
 } from 'lucide-react';
 
 interface OpportunityAgentProps {
@@ -43,6 +45,7 @@ interface OpportunityAgentProps {
   initialPrompt?: string;
   onAddMatchesToTracker: (matchedOpps: Opportunity[], customChecklist: { id: string; text: string; done: boolean }[]) => void;
   onOpenOpportunityDetail: (opp: Opportunity) => void;
+  onOpenProfile?: () => void;
 }
 
 const PRESET_DIRECTIVES = [
@@ -70,8 +73,10 @@ export const OpportunityAgent: React.FC<OpportunityAgentProps> = ({
   trackerItems,
   initialPrompt = '',
   onAddMatchesToTracker,
-  onOpenOpportunityDetail
+  onOpenOpportunityDetail,
+  onOpenProfile
 }) => {
+  const profileCompletion = calculateProfileCompletion(userProfile);
   const [promptInput, setPromptInput] = useState(initialPrompt || '');
   const [isRunning, setIsRunning] = useState(false);
   const [actionPlan, setActionPlan] = useState<AgentExecutionResult | null>(null);
@@ -220,8 +225,8 @@ export const OpportunityAgent: React.FC<OpportunityAgentProps> = ({
           </p>
         </div>
 
-        {/* Active Candidate Profile Intelligence Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 self-start md:self-auto text-xs bg-white dark:bg-[#0c0c0e] p-3 rounded-xl border border-neutral-200 dark:border-white/[0.08] shadow-xs">
+        {/* Active Candidate Profile Intelligence Bar with Match Readiness Progress Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3.5 self-start md:self-auto text-xs bg-white dark:bg-[#0c0c0e] p-3 rounded-xl border border-neutral-200 dark:border-white/[0.08] shadow-xs">
           <div className="flex items-center gap-2.5">
             <div className="h-9 w-9 rounded-full overflow-hidden bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 shrink-0 border border-indigo-200 dark:border-indigo-800">
               <img
@@ -258,13 +263,39 @@ export const OpportunityAgent: React.FC<OpportunityAgentProps> = ({
             </div>
           </div>
 
-          <div className="sm:border-l sm:border-neutral-200 dark:sm:border-white/[0.08] sm:pl-3 pt-2 sm:pt-0">
-            <div className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Grounded in Profile</span>
+          {/* Progress bar visual indicating context completeness */}
+          <div className="sm:border-l sm:border-neutral-200 dark:sm:border-white/[0.08] sm:pl-3.5 pt-2 sm:pt-0 min-w-[160px]">
+            <div className="flex items-center justify-between text-[11px] font-mono mb-1.5">
+              <span className="text-neutral-500 dark:text-neutral-400 flex items-center gap-1">
+                <Sparkles className="h-3 w-3 text-indigo-500" />
+                <span>AI Readiness</span>
+              </span>
+              <span className="font-bold text-indigo-600 dark:text-indigo-400">
+                {profileCompletion.percentage}%
+              </span>
             </div>
-            <div className="text-[10px] text-neutral-400 line-clamp-1 max-w-[160px]" title={userProfile.statementOfAmbition || userProfile.careerGoals}>
-              {userProfile.statementOfAmbition || userProfile.careerGoals || 'Ready for matching'}
+            
+            {/* Visual Progress Bar */}
+            <div className="w-full h-2 rounded-full bg-neutral-200 dark:bg-white/[0.08] overflow-hidden mb-1.5 p-0.5">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500 transition-all duration-500"
+                style={{ width: `${Math.max(6, profileCompletion.percentage)}%` }}
+              />
+            </div>
+
+            <div className="flex items-center justify-between text-[10px]">
+              <span className="text-neutral-400 truncate max-w-[110px]" title={profileCompletion.summaryMessage}>
+                {profileCompletion.percentage >= 80 ? 'Optimal context' : 'Add LinkedIn/Edu'}
+              </span>
+              {onOpenProfile && (
+                <button
+                  type="button"
+                  onClick={onOpenProfile}
+                  className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline shrink-0"
+                >
+                  Edit Profile →
+                </button>
+              )}
             </div>
           </div>
         </div>
